@@ -83,8 +83,7 @@ export default function Home() {
           </div>
         </div>
         <div className="hero-scroll" aria-hidden="true">
-          <span>SCROLL</span>
-          <div className="hero-scroll-arrow" />
+
         </div>
       </section>
 
