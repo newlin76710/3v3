@@ -1,4 +1,8 @@
 {
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "out",
+  "installCommand": "npm install",
   "headers": [
     {
       "source": "/_next/static/(.*)",
@@ -13,13 +17,7 @@
       ]
     },
     {
-      "source": "/(.*\\.html)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
-      ]
-    },
-    {
-      "source": "/",
+      "source": "/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
