@@ -100,7 +100,12 @@ export default function ChineseCupPage() {
             <a href="#ev-register" className="btn-primary ev-register-btn">立即線上報名 →</a>
           </div>
           <div className="ev-hero-img">
-            <img src="/images/33比賽.jpg" alt="第一屆中華盃全國羽球3對3錦標賽" />
+            <a href="#ev-register" className="ev-hero-img-link">
+              <img
+                src="/images/33比賽.jpg"
+                alt="第一屆中華盃全國羽球3對3錦標賽"
+              />
+            </a>
           </div>
         </div>
       </section>
