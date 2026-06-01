@@ -12,7 +12,11 @@ const navItems = [
   { href: '#contact',     label: '聯絡我們' },
 ];
 
-export default function Navbar() {
+interface NavbarProps {
+  base?: string;
+}
+
+export default function Navbar({ base = '' }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState('');
@@ -37,7 +41,7 @@ export default function Navbar() {
 
   return (
     <nav id="navbar" className={scrolled ? 'scrolled' : ''}>
-      <a href="#hero" className="nav-brand">
+      <a href={base + '#hero'} className="nav-brand">
         <img src="/images/3v3.jpg" alt="協會Logo" width={46} height={46} />
         <div>
           <span className="nav-brand-en">CHINESE TAIPEI 3V3 BADMINTON ASSOCIATION</span>
@@ -49,7 +53,7 @@ export default function Navbar() {
         {navItems.map((item) => (
           <a
             key={item.href}
-            href={item.href}
+            href={base + item.href}
             className={active === item.href.slice(1) ? 'active' : ''}
             onClick={() => setOpen(false)}
           >

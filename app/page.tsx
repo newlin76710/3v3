@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import Navbar from './components/Navbar';
 import ContactForm from './components/ContactForm';
 
@@ -199,25 +200,28 @@ export default function Home() {
             </a>
           </div>
 
-          <div className="event-card">
-            <div className="event-img">
-              <img src="/images/33比賽.jpg" alt="第一屆中華盃全國羽球3對3錦標賽" width={240} height={200} />
-            </div>
-            <div className="event-body">
-              <span className="event-tag">全國錦標賽</span>
-              <h3>第一屆中華盃全國羽球3對3錦標賽</h3>
-              <p>
-                首屆由本協會主辦之全國性羽球3對3錦標賽，設有 A／B／C／D 四組，
-                依隊齡積分與年齡進行分組競賽。會員享半價報名優惠，
-                全體參賽選手均可獲得紀念品，各組另設有豐富獎品。
-              </p>
-              <div className="event-meta">
-                <span>📅 民國115年12月30日（星期日）</span>
-                <span>📍 臺北體育館 7樓羽球館</span>
-                <span>🏸 全國 3對3 錦標賽</span>
+          <Link href="/events/chinese-cup" className="event-card-link">
+            <div className="event-card">
+              <div className="event-img">
+                <img src="/images/33比賽.jpg" alt="第一屆中華盃全國羽球3對3錦標賽" width={240} height={200} />
+              </div>
+              <div className="event-body">
+                <span className="event-tag">全國錦標賽</span>
+                <h3>第一屆中華盃全國羽球3對3錦標賽</h3>
+                <p>
+                  首屆由本協會主辦之全國性羽球3對3錦標賽，設有 A／B／C／D 四組，
+                  依隊齡積分與年齡進行分組競賽。會員享半價報名優惠，
+                  全體參賽選手均可獲得紀念品，各組另設有豐富獎品。
+                </p>
+                <div className="event-meta">
+                  <span>📅 民國115年12月30日（星期日）</span>
+                  <span>📍 臺北體育館 7樓羽球館</span>
+                  <span>🏸 全國 3對3 錦標賽</span>
+                </div>
+                <div className="event-detail-link">查看詳情 &amp; 立即報名 →</div>
               </div>
             </div>
-          </div>
+          </Link>
 
           <div className="event-card">
             <div className="event-img">

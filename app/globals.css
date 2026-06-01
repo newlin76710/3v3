@@ -582,6 +582,209 @@ footer strong { color: rgba(255,255,255,0.85); }
 }
 .footer-fb:hover { background: #1458c0; }
 
+/* ===== EVENT CARD LINK ===== */
+.event-card-link {
+  display: block;
+  color: inherit;
+  margin-bottom: 28px;
+  cursor: pointer;
+}
+.event-card-link:last-child { margin-bottom: 0; }
+.event-card { cursor: pointer; }
+.event-detail-link {
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--red);
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: gap 0.2s;
+}
+.event-card:hover .event-detail-link { text-decoration: underline; }
+
+/* ===== EVENT DETAIL PAGE ===== */
+.ev-breadcrumb {
+  padding: 84px 5% 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--muted);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.ev-breadcrumb a { color: var(--muted); transition: color 0.2s; }
+.ev-breadcrumb a:hover { color: var(--dark); }
+
+#ev-hero {
+  background: var(--light);
+  padding: 32px 5% 80px;
+}
+.ev-hero-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+.ev-hero-title {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 900;
+  color: var(--dark);
+  line-height: 1.2;
+  margin: 10px 0 18px;
+}
+.ev-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 24px;
+}
+.ev-info-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: white;
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.ev-info-item > span:first-child { font-size: 1.2rem; flex-shrink: 0; }
+.ev-info-label { font-size: 0.7rem; color: var(--muted); font-weight: 600; letter-spacing: 0.06em; }
+.ev-info-val { font-size: 0.86rem; font-weight: 600; color: var(--dark); margin-top: 2px; }
+.ev-register-btn { margin-top: 28px; display: inline-block; }
+.ev-hero-img img {
+  width: 100%;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  object-fit: contain;
+}
+
+.ev-section-inner { max-width: 960px; margin: 0 auto; }
+#ev-benefits { background: white; }
+#ev-divisions { background: var(--light); }
+
+.ev-benefits-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 8px;
+}
+.ev-benefit-card {
+  background: var(--light);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  border-top: 4px solid var(--red);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+#ev-benefits .ev-benefit-card { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+.ev-benefit-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.ev-benefit-icon { font-size: 2rem; margin-bottom: 12px; }
+.ev-benefit-card h3 { font-size: 1rem; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+.ev-benefit-card p { font-size: 0.86rem; color: var(--muted); line-height: 1.7; }
+
+.ev-div-wrap { overflow-x: auto; border-radius: var(--radius); box-shadow: var(--shadow); }
+.ev-div-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.ev-div-table th {
+  background: var(--dark);
+  color: white;
+  padding: 14px 20px;
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.ev-div-table td {
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+  background: white;
+  vertical-align: middle;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.ev-div-table tr:last-child td { border-bottom: none; }
+.ev-div-table tbody tr:hover td { background: #fafafa; }
+.ev-div-tag {
+  display: inline-block;
+  background: var(--red);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-right: 8px;
+}
+.ev-div-badge { font-weight: 800; color: var(--dark); font-size: 0.92rem; }
+.ev-note { font-size: 0.78rem; color: var(--muted); margin-top: 14px; }
+
+#ev-register {
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+}
+.ev-reg-label { color: #e07070; }
+.ev-reg-title { color: white; }
+.ev-reg-divider { background: linear-gradient(90deg, #e07070, #7bbde0); }
+.ev-reg-desc { color: rgba(255,255,255,0.7); }
+
+.reg-form-wrap {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius);
+  padding: 36px;
+  margin-top: 28px;
+}
+.reg-form .form-group { margin-bottom: 16px; }
+.reg-form .form-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.65);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.reg-form .form-group input,
+.reg-form .form-group textarea,
+.reg-form .form-group select {
+  width: 100%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: white;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  -webkit-appearance: none;
+}
+.reg-form .form-group input::placeholder,
+.reg-form .form-group textarea::placeholder { color: rgba(255,255,255,0.3); }
+.reg-form .form-group input:focus,
+.reg-form .form-group textarea:focus,
+.reg-form .form-group select:focus {
+  border-color: rgba(192,57,43,0.7);
+  background: rgba(255,255,255,0.11);
+}
+.reg-form .form-group select option { background: #1a1a2e; color: white; }
+.reg-form .form-group textarea { min-height: 90px; resize: vertical; }
+.reg-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.reg-submit { width: 100%; padding: 14px; font-size: 1rem; margin-top: 8px; }
+
+.reg-success {
+  text-align: center;
+  padding: 60px 20px;
+  color: white;
+}
+.reg-success-icon { font-size: 3.5rem; margin-bottom: 16px; }
+.reg-success h3 { font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 12px; }
+.reg-success p { color: rgba(255,255,255,0.7); margin-bottom: 28px; line-height: 1.8; }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
   .about-grid,
@@ -591,10 +794,18 @@ footer strong { color: rgba(255,255,255,0.85); }
   .event-card { grid-template-columns: 1fr; }
   .event-img { height: 200px; }
   .cert-badge { bottom: 10px; left: 10px; }
+  .ev-hero-inner { grid-template-columns: 1fr; }
+  .ev-hero-img { order: -1; }
+  .ev-info-grid { grid-template-columns: 1fr 1fr; }
+  .ev-benefits-grid { grid-template-columns: 1fr 1fr; }
+  .reg-form-row { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   section { padding: 60px 5%; }
   .mission-grid { grid-template-columns: 1fr; }
+  .ev-info-grid { grid-template-columns: 1fr; }
+  .ev-benefits-grid { grid-template-columns: 1fr; }
+  .reg-form-wrap { padding: 20px; }
   .nav-links {
     display: none;
     flex-direction: column;
