@@ -214,7 +214,7 @@ export default function Home() {
                   全體參賽選手均可獲得紀念品，各組另設有豐富獎品。
                 </p>
                 <div className="event-meta">
-                  <span>📅 民國115年12月30日（星期日）</span>
+                  <span>📅 民國115年12月20日（星期日）</span>
                   <span>📍 臺北體育館 7樓羽球館</span>
                   <span>🏸 全國 3對3 錦標賽</span>
                 </div>

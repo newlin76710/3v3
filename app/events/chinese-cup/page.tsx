@@ -5,7 +5,7 @@ import RegisterForm from './RegisterForm';
 export const metadata: Metadata = {
   title: '第一屆中華盃全國羽球3對3錦標賽 — 線上報名 | 中華台北羽球3對3發展協會',
   description:
-    '第一屆中華盃全國羽球3對3錦標賽，民國115年12月30日（星期日）於臺北體育館7樓羽球館舉行。設 A、B、C、D 四組，會員半價，人人有獎。立即線上報名！',
+    '第一屆中華盃全國羽球3對3錦標賽，民國115年12月20日（星期日）於臺北體育館7樓羽球館舉行。設 A、B、C、D 四組，會員半價，人人有獎。立即線上報名！',
 };
 
 const FB_URL = 'https://www.facebook.com/share/16w8aQX2dy/';
@@ -72,7 +72,7 @@ export default function ChineseCupPage() {
                 <span>📅</span>
                 <div>
                   <div className="ev-info-label">比賽日期</div>
-                  <div className="ev-info-val">民國115年12月30日（星期日）</div>
+                  <div className="ev-info-val">民國115年12月20日（星期日）</div>
                 </div>
               </div>
               <div className="ev-info-item">
