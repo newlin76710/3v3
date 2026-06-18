@@ -108,7 +108,12 @@ export default function Home() {
             </div>
             <div className="promo-actions">
               <Link href="/events/chinese-cup" className="promo-btn">立即線上報名 →</Link>
-              <QRCodeDisplay />
+              <div className="qr-download-wrap">
+                <QRCodeDisplay />
+                <a href="/qrcode-register.png" download="報名QRCode.png" className="qr-download-btn">
+                  ⬇ 下載 QR Code
+                </a>
+              </div>
             </div>
           </div>
         </div>

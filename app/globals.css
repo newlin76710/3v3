@@ -412,6 +412,23 @@ section { padding: 80px 5%; }
   font-weight: 600;
   text-align: center;
 }
+.qr-download-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.qr-download-btn {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+  font-weight: 600;
+  padding: 5px 14px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 999px;
+  transition: background 0.2s, color 0.2s;
+  text-align: center;
+}
+.qr-download-btn:hover { background: rgba(255,255,255,0.15); color: white; }
 
 /* ===== ABOUT ===== */
 #about { background: var(--light); }
