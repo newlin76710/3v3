@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Navbar from './components/Navbar';
 import ContactForm from './components/ContactForm';
+import QRCodeDisplay from './components/QRCodeDisplay';
 
 const FB_URL = 'https://www.facebook.com/share/16w8aQX2dy/';
 
@@ -85,6 +86,31 @@ export default function Home() {
         </div>
         <div className="hero-scroll" aria-hidden="true">
 
+        </div>
+      </section>
+
+      {/* ===== CURRENT EVENT PROMO ===== */}
+      <section id="current-event">
+        <div className="promo-inner">
+          <div className="promo-poster">
+            <Link href="/events/chinese-cup">
+              <img src="/images/33/1.jpg" alt="第一屆中華臺北羽球3對3全國錦標賽" />
+            </Link>
+          </div>
+          <div className="promo-info">
+            <span className="promo-badge">當前賽事 ★ 報名開放中</span>
+            <h2 className="promo-title">第一屆中華臺北<br />羽球3對3全國錦標賽</h2>
+            <div className="promo-meta">
+              <div className="promo-meta-item"><span>📅</span><div><div className="promo-meta-label">比賽日期</div><div className="promo-meta-val">民國115年12月20日（星期日）</div></div></div>
+              <div className="promo-meta-item"><span>📍</span><div><div className="promo-meta-label">比賽地點</div><div className="promo-meta-val">臺北體育館 7樓羽球館</div></div></div>
+              <div className="promo-meta-item"><span>⏰</span><div><div className="promo-meta-label">報名截止</div><div className="promo-meta-val promo-deadline">2026 年 11 月 15 日</div></div></div>
+              <div className="promo-meta-item"><span>🏸</span><div><div className="promo-meta-label">組別</div><div className="promo-meta-val">A / B / C / D 四組</div></div></div>
+            </div>
+            <div className="promo-actions">
+              <Link href="/events/chinese-cup" className="promo-btn">立即線上報名 →</Link>
+              <QRCodeDisplay />
+            </div>
+          </div>
         </div>
       </section>
 

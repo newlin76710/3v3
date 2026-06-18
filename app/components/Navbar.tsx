@@ -41,6 +41,11 @@ export default function Navbar({ base = '' }: NavbarProps) {
   }, []);
 
   return (
+    <>
+      <div id="announce-strip">
+        <span>🏸 <strong>第一屆中華盃全國羽球3對3錦標賽</strong> — 報名截止：2026.11.15</span>
+        <a href="/events/chinese-cup">立即報名 →</a>
+      </div>
     <nav id="navbar" className={scrolled ? 'scrolled' : ''}>
       <a href={base + '#hero'} className="nav-brand">
         <img src="/images/3v3.jpg" alt="協會Logo" width={46} height={46} />
@@ -79,5 +84,6 @@ export default function Navbar({ base = '' }: NavbarProps) {
         <span /><span /><span />
       </button>
     </nav>
+    </>
   );
 }
