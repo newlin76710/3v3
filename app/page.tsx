@@ -203,7 +203,7 @@ export default function Home() {
           <Link href="/events/chinese-cup" className="event-card-link">
             <div className="event-card">
               <div className="event-img">
-                <img src="/images/33/1.jpg" alt="第一屆中華盃全國羽球3對3錦標賽" width={240} height={200} />
+                <img src="/images/33比賽.jpg" alt="第一屆中華盃全國羽球3對3錦標賽" width={240} height={200} />
               </div>
               <div className="event-body">
                 <span className="event-tag">全國錦標賽</span>
@@ -255,8 +255,8 @@ export default function Home() {
             <p className="section-desc">記錄協會重要時刻與精彩活動，留下每一個美好回憶。</p>
           </div>
           <div className="gallery-grid">
-            {Array.from({ length: 10 }, (_, i) => ({
-              src: `/images/33/${i + 1}.jpg`,
+            {Array.from({ length: 9 }, (_, i) => ({
+              src: `/images/33/${i + 2}.jpg`,
               alt: '協會照片',
             })).map((photo, i) => (
               <div key={i} className="gallery-item">

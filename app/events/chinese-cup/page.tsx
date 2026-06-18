@@ -102,7 +102,7 @@ export default function ChineseCupPage() {
           <div className="ev-hero-img">
             <a href="#ev-register" className="ev-hero-img-link">
               <img
-                src="/images/33/1.jpg"
+                src="/images/33比賽.jpg"
                 alt="第一屆中華盃全國羽球3對3錦標賽"
               />
             </a>
