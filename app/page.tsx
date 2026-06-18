@@ -203,7 +203,7 @@ export default function Home() {
           <Link href="/events/chinese-cup" className="event-card-link">
             <div className="event-card">
               <div className="event-img">
-                <img src="/images/33比賽.jpg" alt="第一屆中華盃全國羽球3對3錦標賽" width={240} height={200} />
+                <img src="/images/33/1.jpg" alt="第一屆中華盃全國羽球3對3錦標賽" width={240} height={200} />
               </div>
               <div className="event-body">
                 <span className="event-tag">全國錦標賽</span>
