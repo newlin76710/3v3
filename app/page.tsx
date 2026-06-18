@@ -245,6 +245,28 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== PHOTOS ===== */}
+      <section id="photos">
+        <div className="photos-inner">
+          <div className="photos-header">
+            <span className="section-label">Association Photos</span>
+            <h2 className="section-title">協會照片</h2>
+            <div className="section-divider" />
+            <p className="section-desc">記錄協會重要時刻與精彩活動，留下每一個美好回憶。</p>
+          </div>
+          <div className="gallery-grid">
+            {Array.from({ length: 10 }, (_, i) => ({
+              src: `/images/33/${i + 1}.jpg`,
+              alt: '協會照片',
+            })).map((photo, i) => (
+              <div key={i} className="gallery-item">
+                <img src={photo.src} alt={photo.alt} loading="lazy" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== CONTACT ===== */}
       <section id="contact">
         <div className="contact-inner">
@@ -313,6 +335,7 @@ export default function Home() {
           <a href="#mission">協會宗旨</a>
           <a href="#association">協會介紹</a>
           <a href="#events">賽事活動</a>
+          <a href="#photos">協會照片</a>
           <a href="#contact">聯絡我們</a>
         </div>
         <p>

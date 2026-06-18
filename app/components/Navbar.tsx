@@ -9,6 +9,7 @@ const navItems = [
   { href: '#mission',     label: '協會宗旨' },
   { href: '#association', label: '協會介紹' },
   { href: '#events',      label: '賽事活動' },
+  { href: '#photos',      label: '協會照片' },
   { href: '#contact',     label: '聯絡我們' },
 ];
 
