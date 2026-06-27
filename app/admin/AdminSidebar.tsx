@@ -4,13 +4,14 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Users, Trophy, ClipboardList, CreditCard,
+  LayoutDashboard, Users, UserCircle, Trophy, ClipboardList, CreditCard,
   Megaphone, Settings, LogOut, ChevronRight,
 } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/members", label: "會員管理", icon: Users },
+  { href: "/admin/users", label: "網站用戶", icon: UserCircle },
+  { href: "/admin/members", label: "入會申請", icon: Users },
   { href: "/admin/events", label: "賽事管理", icon: Trophy },
   { href: "/admin/registrations", label: "報名管理", icon: ClipboardList },
   { href: "/admin/payments", label: "付款確認", icon: CreditCard },

@@ -17,7 +17,7 @@ export default async function MemberPage() {
 
   return (
     <MemberDashboard
-      user={session.user}
+      user={{ ...session.user, role: session.user.role }}
       member={memberData}
       registrations={registrations}
     />

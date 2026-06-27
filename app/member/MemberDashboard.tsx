@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import {
-  User, CreditCard, Trophy, LogOut, Plus, AlertCircle, CheckCircle, Clock,
+  User, CreditCard, Trophy, LogOut, Plus, AlertCircle, CheckCircle, Clock, Settings,
 } from "lucide-react";
 
 type Member = {
@@ -39,7 +39,7 @@ type Registration = {
 };
 
 interface Props {
-  user: { name?: string | null; email?: string | null; image?: string | null };
+  user: { name?: string | null; email?: string | null; image?: string | null; role?: string };
   member: Member | null;
   registrations: Registration[];
 }
@@ -60,6 +60,7 @@ const paymentTypeMap: Record<string, string> = {
 export default function MemberDashboard({ user, member, registrations }: Props) {
   const isExpired = member?.expiresAt ? new Date(member.expiresAt) < new Date() : true;
   const isActiveMember = member?.isActive && !isExpired;
+  const isAdmin = user.role === "ADMIN" || user.role === "STAFF";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -71,6 +72,14 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
             <span className="font-bold text-gray-900 hidden sm:block">中華台北羽球3對3發展協會</span>
           </Link>
           <div className="flex items-center gap-3">
+            {isAdmin && (
+              <Link href="/admin">
+                <Button variant="outline" size="sm" className="gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50">
+                  <Settings className="w-3.5 h-3.5" />
+                  後台管理
+                </Button>
+              </Link>
+            )}
             {user.image && (
               <img src={user.image} alt={user.name ?? ""} className="w-8 h-8 rounded-full" />
             )}

@@ -94,6 +94,33 @@ export async function updateUserRole(userId: string, role: "ADMIN" | "STAFF" | "
   return { success: true };
 }
 
+// 取得所有網站用戶
+export async function getAllUsers(page = 1, pageSize = 30, search = "") {
+  await requireAdmin();
+
+  const where = search
+    ? {
+        OR: [
+          { name: { contains: search } },
+          { email: { contains: search } },
+        ],
+      }
+    : {};
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      include: { member: { select: { id: true, memberNumber: true, isActive: true, expiresAt: true } } },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.user.count({ where }),
+  ]);
+
+  return { users, total, pages: Math.ceil(total / pageSize) };
+}
+
 // 後台 Dashboard 統計
 export async function getDashboardStats() {
   await requireAdmin();
