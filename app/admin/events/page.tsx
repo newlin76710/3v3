@@ -11,7 +11,7 @@ export const metadata = { title: "賽事管理 | 後台" };
 export default async function AdminEventsPage() {
   const events = await prisma.event.findMany({
     include: {
-      groups: { include: { _count: { select: { registrations: true } } } },
+      groups: { include: { _count: { select: { registrations: { where: { paymentStatus: { not: "CANCELLED" } } } } } } },
     },
     orderBy: { date: "desc" },
   });

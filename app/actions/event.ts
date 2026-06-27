@@ -103,7 +103,9 @@ export async function deleteEventGroup(groupId: string) {
 
   const group = await prisma.eventGroup.findUnique({
     where: { id: groupId },
-    include: { _count: { select: { registrations: true } } },
+    include: {
+      _count: { select: { registrations: { where: { paymentStatus: { not: "CANCELLED" } } } } },
+    },
   });
   if (!group) return { error: "組別不存在" };
   if (group._count.registrations > 0) return { error: "此組別已有報名資料，無法刪除" };
@@ -113,12 +115,16 @@ export async function deleteEventGroup(groupId: string) {
   return { success: true };
 }
 
+const activeRegistrationWhere = { paymentStatus: { not: "CANCELLED" as const } };
+
 export async function getPublicEvents() {
   return prisma.event.findMany({
     where: { isOpen: true },
     include: {
       groups: {
-        include: { _count: { select: { registrations: true } } },
+        include: {
+          _count: { select: { registrations: { where: activeRegistrationWhere } } },
+        },
       },
     },
     orderBy: { date: "asc" },
@@ -131,8 +137,9 @@ export async function getEventBySlug(slug: string) {
     include: {
       groups: {
         include: {
-          _count: { select: { registrations: true } },
+          _count: { select: { registrations: { where: activeRegistrationWhere } } },
           registrations: {
+            where: activeRegistrationWhere,
             include: { players: true },
           },
         },

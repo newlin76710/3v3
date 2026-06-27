@@ -175,7 +175,11 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                     <p className="text-white/70 text-xs">CHINESE TAIPEI 3V3 BADMINTON ASSOCIATION</p>
                   </div>
                   <Badge variant={isActiveMember ? "success" : "destructive"} className="text-xs">
-                    {isActiveMember ? "有效會員" : isExpired ? "已過期" : member.paymentStatus === "CONFIRMING" ? "審核中" : "未繳費"}
+                    {isActiveMember ? "有效會員"
+                      : member.paymentStatus === "CANCELLED" ? "已取消"
+                      : isExpired ? "已過期"
+                      : member.paymentStatus === "CONFIRMING" ? "審核中"
+                      : "未繳費"}
                   </Badge>
                 </div>
                 <div className="mb-4">
@@ -215,6 +219,19 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                 <div>
                   <p className="font-medium text-blue-800">付款審核中</p>
                   <p className="text-sm text-blue-700 mt-1">您的匯款資料已提交，管理員審核後將自動啟用會員資格。</p>
+                </div>
+              </div>
+            )}
+
+            {member.paymentStatus === "CANCELLED" && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-red-800">入會申請已取消</p>
+                  <p className="text-sm text-red-700 mt-1">
+                    您的入會申請因報名取消而撤銷。如需重新申請，請前往
+                    <Link href="/member/join" className="underline font-medium">重新申請入會</Link>。
+                  </p>
                 </div>
               </div>
             )}
@@ -292,7 +309,7 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                 {registrations.map((reg) => {
                   const status = statusMap[reg.paymentStatus as keyof typeof statusMap];
                   return (
-                    <Card key={reg.id}>
+                    <Card key={reg.id} className={reg.paymentStatus === "CANCELLED" ? "opacity-60" : ""}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">

@@ -17,7 +17,7 @@ export default async function EventAdminPage({ params }: Props) {
     where: { id },
     include: {
       groups: {
-        include: { _count: { select: { registrations: true } } },
+        include: { _count: { select: { registrations: { where: { paymentStatus: { not: "CANCELLED" } } } } } },
         orderBy: { name: "asc" },
       },
     },

@@ -105,12 +105,52 @@ export async function cancelRegistration(registrationId: string): Promise<{ succ
   try {
     await requireAdmin();
 
+    // 先取得選手名單，處理新入會選手的會員資格
+    const registration = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      include: { players: { select: { nationalId: true, memberStatus: true } } },
+    });
+    if (!registration) return { success: false, error: "找不到報名資料" };
+
     await prisma.registration.update({
       where: { id: registrationId },
       data: { paymentStatus: "CANCELLED" },
     });
 
+    // 對每個新入會選手，確認沒有其他有效報名後停用其 Member 記錄
+    const newMemberPlayers = registration.players.filter((p) => p.memberStatus === "NEW_MEMBER");
+    for (const player of newMemberPlayers) {
+      // 檢查是否還有其他非取消的報名（同一賽事或其他賽事）包含此選手作為 NEW_MEMBER
+      // 只有 itemCount=1（真正繳了700含入會費）的報名才算數
+      const otherActiveReg = await prisma.registrationPlayer.findFirst({
+        where: {
+          nationalId: player.nationalId,
+          memberStatus: "NEW_MEMBER",
+          itemCount: 1,
+          registration: {
+            id: { not: registrationId },
+            paymentStatus: { in: ["CONFIRMING", "PAID"] },
+          },
+        },
+      });
+      if (otherActiveReg) continue; // 還有其他有效的入會來源，不動
+
+      const member = await prisma.member.findUnique({ where: { nationalId: player.nationalId } });
+      if (!member) continue;
+
+      // 停用此 Member（不論目前狀態，一律收回）
+      await prisma.member.update({
+        where: { id: member.id },
+        data: {
+          isActive: false,
+          paymentStatus: "CANCELLED",
+        },
+      });
+    }
+
     revalidatePath("/admin/registrations");
+    revalidatePath("/admin/members");
+    revalidatePath("/member");
     return { success: true };
   } catch (e) {
     return { success: false, error: (e as Error).message };
