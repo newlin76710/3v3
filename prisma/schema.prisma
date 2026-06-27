@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== ENUMS ====================
+
+enum Role {
+  ADMIN
+  STAFF
+  MEMBER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum GenderType {
+  MALE_TRIPLE
+  FEMALE_TRIPLE
+  MIXED
+}
+
+enum MemberStatus {
+  ACTIVE_MEMBER
+  NEW_MEMBER
+  NON_MEMBER
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMING
+  PAID
+  CANCELLED
+}
+
+enum PaymentType {
+  MEMBERSHIP_FEE
+  REGISTRATION_FEE
+  RENEWAL_FEE
+}
+
+// ==================== AUTH MODELS ====================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?
+  role          Role      @default(MEMBER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  member        Member?
+  accounts      Account[]
+  sessions      Session[]
+  registrations Registration[]
+  announcements Announcement[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ==================== MEMBER ====================
+
+model Member {
+  id               String        @id @default(cuid())
+  userId           String        @unique
+  memberNumber     String        @unique
+  nationalId       String        @unique
+  realName         String
+  birthday         DateTime
+  gender           Gender
+  phone            String
+  address          String?
+  expiresAt        DateTime
+  isActive         Boolean       @default(false)
+  paymentStatus    PaymentStatus @default(PENDING)
+  transferLastFive String?
+  transferDate     DateTime?
+  confirmedAt      DateTime?
+  confirmedBy      String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
+}
+
+// ==================== EVENT ====================
+
+model Event {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  date              DateTime
+  location          String
+  registrationStart DateTime
+  registrationEnd   DateTime
+  poster            String?
+  description       String?
+  isOpen            Boolean  @default(false)
+  maxTeamsPerGroup  Int      @default(16)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  groups        EventGroup[]
+  registrations Registration[]
+}
+
+model EventGroup {
+  id               String       @id @default(cuid())
+  eventId          String
+  name             String
+  minTotalAge      Int
+  minIndividualAge Int
+  allowedGenders   GenderType[]
+  maxTeams         Int          @default(16)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  registrations Registration[]
+}
+
+// ==================== REGISTRATION ====================
+
+model Registration {
+  id               String        @id @default(cuid())
+  eventId          String
+  groupId          String
+  teamName         String
+  createdById      String
+  genderType       GenderType
+  paymentStatus    PaymentStatus @default(PENDING)
+  totalAmount      Int
+  transferLastFive String?
+  transferDate     DateTime?
+  confirmedAt      DateTime?
+  confirmedBy      String?
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  event     Event                @relation(fields: [eventId], references: [id])
+  group     EventGroup           @relation(fields: [groupId], references: [id])
+  createdBy User                 @relation(fields: [createdById], references: [id])
+  players   RegistrationPlayer[]
+  payments  Payment[]
+}
+
+model RegistrationPlayer {
+  id               String       @id @default(cuid())
+  registrationId   String
+  name             String
+  nationalId       String
+  birthday         DateTime
+  phone            String
+  gender           Gender
+  emergencyContact String
+  emergencyPhone   String
+  memberStatus     MemberStatus @default(NON_MEMBER)
+  itemCount        Int          @default(1)
+  fee              Int
+  createdAt        DateTime     @default(now())
+
+  registration Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+}
+
+// ==================== PAYMENT ====================
+
+model Payment {
+  id               String        @id @default(cuid())
+  memberId         String?
+  registrationId   String?
+  type             PaymentType
+  amount           Int
+  status           PaymentStatus @default(PENDING)
+  transferLastFive String?
+  transferDate     DateTime?
+  confirmedAt      DateTime?
+  confirmedBy      String?
+  bankCode         String?
+  bankAccount      String?
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  member       Member?       @relation(fields: [memberId], references: [id])
+  registration Registration? @relation(fields: [registrationId], references: [id])
+}
+
+// ==================== ANNOUNCEMENT ====================
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  isPublished Boolean  @default(false)
+  authorId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author User? @relation(fields: [authorId], references: [id])
+}
