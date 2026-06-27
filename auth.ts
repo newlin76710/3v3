@@ -2,33 +2,8 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Google from "next-auth/providers/google";
 import Facebook from "next-auth/providers/facebook";
+import LINE from "next-auth/providers/line";
 import { prisma } from "@/lib/prisma";
-
-// LINE 自訂 OAuth Provider
-const LINE = {
-  id: "line",
-  name: "LINE",
-  type: "oauth" as const,
-  authorization: {
-    url: "https://access.line.me/oauth2/v2.1/authorize",
-    params: {
-      scope: "profile openid email",
-      response_type: "code",
-    },
-  },
-  token: "https://api.line.me/oauth2/v2.1/token",
-  userinfo: "https://api.line.me/v2/profile",
-  profile(profile: { userId: string; displayName: string; pictureUrl?: string }) {
-    return {
-      id: profile.userId,
-      name: profile.displayName,
-      email: null,
-      image: profile.pictureUrl ?? null,
-    };
-  },
-  clientId: process.env.LINE_CLIENT_ID!,
-  clientSecret: process.env.LINE_CLIENT_SECRET!,
-};
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -41,7 +16,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.FACEBOOK_CLIENT_ID!,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
     }),
-    LINE,
+    LINE({
+      clientId: process.env.LINE_CLIENT_ID!,
+      clientSecret: process.env.LINE_CLIENT_SECRET!,
+    }),
   ],
   session: { strategy: "database" },
   pages: {
