@@ -33,9 +33,13 @@ export async function createEvent(data: z.infer<typeof eventSchema>) {
     const event = await prisma.event.create({
       data: {
         ...parsed.data,
-        date: new Date(parsed.data.date),
-        registrationStart: new Date(parsed.data.registrationStart),
-        registrationEnd: new Date(parsed.data.registrationEnd),
+        date: new Date(parsed.data.date + "T00:00:00.000Z"),
+        registrationStart: new Date(parsed.data.registrationStart.includes("T")
+          ? parsed.data.registrationStart
+          : parsed.data.registrationStart + "T00:00:00.000Z"),
+        registrationEnd: new Date(parsed.data.registrationEnd.includes("T")
+          ? parsed.data.registrationEnd
+          : parsed.data.registrationEnd + "T15:59:59.999Z"),
       },
     });
     revalidatePath("/events");
@@ -55,9 +59,13 @@ export async function updateEvent(id: string, data: Partial<z.infer<typeof event
   }
 
   const dateFields: Partial<{ date: Date; registrationStart: Date; registrationEnd: Date }> = {};
-  if (data.date) dateFields.date = new Date(data.date);
-  if (data.registrationStart) dateFields.registrationStart = new Date(data.registrationStart);
-  if (data.registrationEnd) dateFields.registrationEnd = new Date(data.registrationEnd);
+  if (data.date) dateFields.date = new Date(data.date + "T00:00:00.000Z");
+  if (data.registrationStart) dateFields.registrationStart = new Date(
+    data.registrationStart.includes("T") ? data.registrationStart : data.registrationStart + "T00:00:00.000Z"
+  );
+  if (data.registrationEnd) dateFields.registrationEnd = new Date(
+    data.registrationEnd.includes("T") ? data.registrationEnd : data.registrationEnd + "T15:59:59.999Z"
+  );
   await prisma.event.update({ where: { id }, data: { ...data, ...dateFields } });
   revalidatePath("/events");
   revalidatePath("/admin/events");

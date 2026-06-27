@@ -47,12 +47,6 @@ const genderLabel: Record<string, string> = {
   MIXED: "混3P",
 };
 
-function toDatetimeLocal(d: Date): string {
-  const dt = new Date(d);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-}
-
 function toDateInput(d: Date): string {
   const dt = new Date(d);
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -70,8 +64,8 @@ export default function EventAdminManager({ event }: Props) {
     slug: event.slug,
     date: toDateInput(event.date),
     location: event.location,
-    registrationStart: toDatetimeLocal(event.registrationStart),
-    registrationEnd: toDatetimeLocal(event.registrationEnd),
+    registrationStart: toDateInput(event.registrationStart),
+    registrationEnd: toDateInput(event.registrationEnd),
     poster: event.poster ?? "",
     description: event.description ?? "",
   });
@@ -199,7 +193,7 @@ export default function EventAdminManager({ event }: Props) {
                   <DateSelectPicker
                     value={editForm.date}
                     onChange={(v) => setEditForm((f) => ({ ...f, date: v }))}
-                    minYear={new Date().getFullYear() - 1}
+                    minYear={new Date().getFullYear() - 10}
                     maxYear={new Date().getFullYear() + 10}
                     className="mt-1"
                   />
@@ -219,9 +213,8 @@ export default function EventAdminManager({ event }: Props) {
                   <DateSelectPicker
                     value={editForm.registrationStart}
                     onChange={(v) => setEditForm((f) => ({ ...f, registrationStart: v }))}
-                    minYear={new Date().getFullYear() - 1}
+                    minYear={new Date().getFullYear() - 10}
                     maxYear={new Date().getFullYear() + 10}
-                    includeTime
                     className="mt-1"
                   />
                 </div>
@@ -230,9 +223,8 @@ export default function EventAdminManager({ event }: Props) {
                   <DateSelectPicker
                     value={editForm.registrationEnd}
                     onChange={(v) => setEditForm((f) => ({ ...f, registrationEnd: v }))}
-                    minYear={new Date().getFullYear() - 1}
+                    minYear={new Date().getFullYear() - 10}
                     maxYear={new Date().getFullYear() + 10}
-                    includeTime
                     className="mt-1"
                   />
                 </div>
@@ -269,8 +261,8 @@ export default function EventAdminManager({ event }: Props) {
                       slug: event.slug,
                       date: toDateInput(event.date),
                       location: event.location,
-                      registrationStart: toDatetimeLocal(event.registrationStart),
-                      registrationEnd: toDatetimeLocal(event.registrationEnd),
+                      registrationStart: toDateInput(event.registrationStart),
+                      registrationEnd: toDateInput(event.registrationEnd),
                       poster: event.poster ?? "",
                       description: event.description ?? "",
                     });

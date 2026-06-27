@@ -107,7 +107,7 @@ export default function NewEventPage() {
                 <DateSelectPicker
                   value={form.date}
                   onChange={(v) => setForm((f) => ({ ...f, date: v }))}
-                  minYear={new Date().getFullYear() - 1}
+                  minYear={new Date().getFullYear() - 10}
                   maxYear={new Date().getFullYear() + 10}
                   className="mt-1"
                 />
@@ -129,9 +129,8 @@ export default function NewEventPage() {
                 <DateSelectPicker
                   value={form.registrationStart}
                   onChange={(v) => setForm((f) => ({ ...f, registrationStart: v }))}
-                  minYear={new Date().getFullYear() - 1}
+                  minYear={new Date().getFullYear() - 10}
                   maxYear={new Date().getFullYear() + 10}
-                  includeTime
                   className="mt-1"
                 />
               </div>
@@ -140,9 +139,8 @@ export default function NewEventPage() {
                 <DateSelectPicker
                   value={form.registrationEnd}
                   onChange={(v) => setForm((f) => ({ ...f, registrationEnd: v }))}
-                  minYear={new Date().getFullYear() - 1}
+                  minYear={new Date().getFullYear() - 10}
                   maxYear={new Date().getFullYear() + 10}
-                  includeTime
                   className="mt-1"
                 />
               </div>
