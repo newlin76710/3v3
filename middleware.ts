@@ -1,28 +1,28 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default auth((req) => {
-  const { pathname } = req.nextUrl;
-  const isLoggedIn = !!req.auth;
-  const userRole = req.auth?.user?.role;
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-  // 保護會員中心
-  if (pathname.startsWith("/member") && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
+  // Auth.js v5 session cookie (HTTP: authjs.session-token, HTTPS: __Secure-authjs.session-token)
+  const sessionToken =
+    request.cookies.get("authjs.session-token") ??
+    request.cookies.get("__Secure-authjs.session-token");
 
-  // 保護後台 - 只有 ADMIN 和 STAFF
-  if (pathname.startsWith("/admin")) {
-    if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
-    if (userRole !== "ADMIN" && userRole !== "STAFF") {
-      return NextResponse.redirect(new URL("/", req.url));
+  const isLoggedIn = !!sessionToken;
+
+  if (!isLoggedIn) {
+    if (
+      pathname.startsWith("/member") ||
+      pathname.startsWith("/admin") ||
+      pathname.includes("/register")
+    ) {
+      return NextResponse.redirect(new URL("/login", request.url));
     }
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/member/:path*", "/admin/:path*", "/events/:path*/register"],
