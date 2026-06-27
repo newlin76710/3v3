@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { updateEvent, createEventGroup, deleteEventGroup } from "@/app/actions/event";
 import { formatDate } from "@/lib/utils";
+import DateSelectPicker from "@/components/ui/date-select";
 import { Plus, Loader2, Users, Trash2, Pencil, X } from "lucide-react";
 
 type Group = {
@@ -195,10 +196,11 @@ export default function EventAdminManager({ event }: Props) {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <Label>比賽日期 *</Label>
-                  <Input
-                    type="date"
+                  <DateSelectPicker
                     value={editForm.date}
-                    onChange={(e) => setEditForm((f) => ({ ...f, date: e.target.value }))}
+                    onChange={(v) => setEditForm((f) => ({ ...f, date: v }))}
+                    minYear={new Date().getFullYear() - 1}
+                    maxYear={new Date().getFullYear() + 10}
                     className="mt-1"
                   />
                 </div>
@@ -214,19 +216,23 @@ export default function EventAdminManager({ event }: Props) {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <Label>報名開始</Label>
-                  <Input
-                    type="datetime-local"
+                  <DateSelectPicker
                     value={editForm.registrationStart}
-                    onChange={(e) => setEditForm((f) => ({ ...f, registrationStart: e.target.value }))}
+                    onChange={(v) => setEditForm((f) => ({ ...f, registrationStart: v }))}
+                    minYear={new Date().getFullYear() - 1}
+                    maxYear={new Date().getFullYear() + 10}
+                    includeTime
                     className="mt-1"
                   />
                 </div>
                 <div>
                   <Label>報名截止</Label>
-                  <Input
-                    type="datetime-local"
+                  <DateSelectPicker
                     value={editForm.registrationEnd}
-                    onChange={(e) => setEditForm((f) => ({ ...f, registrationEnd: e.target.value }))}
+                    onChange={(v) => setEditForm((f) => ({ ...f, registrationEnd: v }))}
+                    minYear={new Date().getFullYear() - 1}
+                    maxYear={new Date().getFullYear() + 10}
+                    includeTime
                     className="mt-1"
                   />
                 </div>

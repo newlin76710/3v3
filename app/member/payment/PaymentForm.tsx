@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { submitMemberPayment } from "@/app/actions/member";
 import { submitRegistrationPayment } from "@/app/actions/registration";
+import DateSelectPicker from "@/components/ui/date-select";
 import { Loader2 } from "lucide-react";
 
 interface Props {
@@ -64,13 +65,12 @@ export default function PaymentForm({ type, registrationId, memberId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <Label htmlFor="transferDate">匯款日期 *</Label>
-        <Input
-          id="transferDate"
-          type="date"
+        <Label>匯款日期 *</Label>
+        <DateSelectPicker
           value={transferDate}
-          onChange={(e) => setTransferDate(e.target.value)}
-          max={new Date().toISOString().split("T")[0]}
+          onChange={(v) => setTransferDate(v)}
+          minYear={new Date().getFullYear() - 2}
+          maxYear={new Date().getFullYear()}
           className="mt-1"
         />
         {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}

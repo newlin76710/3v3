@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { createRegistration } from "@/app/actions/registration";
 import { calculatePlayerFee, formatCurrency } from "@/lib/utils";
 import { differenceInYears } from "date-fns";
+import DateSelectPicker from "@/components/ui/date-select";
 import { Loader2, AlertTriangle, CheckCircle, Users } from "lucide-react";
 
 type EventGroup = {
@@ -328,10 +329,10 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
 
                 <div>
                   <Label>出生日期（年齡自動計算）*</Label>
-                  <Input
-                    type="date"
+                  <DateSelectPicker
                     value={player.birthday}
-                    onChange={(e) => updatePlayer(index, "birthday", e.target.value)}
+                    onChange={(v) => updatePlayer(index, "birthday", v)}
+                    maxYear={new Date().getFullYear()}
                     className="mt-1"
                   />
                   {age !== null && (

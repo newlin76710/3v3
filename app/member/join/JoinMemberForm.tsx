@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { registerMember } from "@/app/actions/member";
+import DateSelectPicker from "@/components/ui/date-select";
 import { Loader2 } from "lucide-react";
 
 const schema = z.object({
@@ -31,8 +32,11 @@ export default function JoinMemberForm() {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  const birthday = watch("birthday");
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
@@ -89,8 +93,13 @@ export default function JoinMemberForm() {
       </div>
 
       <div>
-        <Label htmlFor="birthday">出生日期 *</Label>
-        <Input id="birthday" type="date" {...register("birthday")} className="mt-1" />
+        <Label>出生日期 *</Label>
+        <DateSelectPicker
+          value={birthday ?? ""}
+          onChange={(v) => setValue("birthday", v, { shouldValidate: true })}
+          maxYear={new Date().getFullYear()}
+          className="mt-1"
+        />
         {errors.birthday && <p className="text-red-500 text-xs mt-1">{errors.birthday.message}</p>}
       </div>
 
