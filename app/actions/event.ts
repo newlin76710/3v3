@@ -18,21 +18,27 @@ const eventSchema = z.object({
 });
 
 export async function createEvent(data: z.infer<typeof eventSchema>) {
-  const session = await auth();
-  if (!session?.user || !["ADMIN", "STAFF"].includes(session.user.role)) {
-    return { error: "無權限" };
+  try {
+    const session = await auth();
+    if (!session?.user || !["ADMIN", "STAFF"].includes(session.user.role)) {
+      return { error: "無權限" };
+    }
+
+    const parsed = eventSchema.safeParse(data);
+    if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+    const existing = await prisma.event.findUnique({ where: { slug: parsed.data.slug } });
+    if (existing) return { error: "此 slug 已存在" };
+
+    const event = await prisma.event.create({ data: parsed.data });
+    revalidatePath("/events");
+    revalidatePath("/admin/events");
+    return { success: true, id: event.id };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[createEvent]", message);
+    return { error: `伺服器錯誤：${message}` };
   }
-
-  const parsed = eventSchema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-
-  const existing = await prisma.event.findUnique({ where: { slug: parsed.data.slug } });
-  if (existing) return { error: "此 slug 已存在" };
-
-  const event = await prisma.event.create({ data: parsed.data });
-  revalidatePath("/events");
-  revalidatePath("/admin/events");
-  return { success: true, id: event.id };
 }
 
 export async function updateEvent(id: string, data: Partial<z.infer<typeof eventSchema>>) {

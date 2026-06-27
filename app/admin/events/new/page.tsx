@@ -43,6 +43,9 @@ export default function NewEventPage() {
         toast.success("賽事建立成功！");
         router.push(`/admin/events/${result.id}`);
       }
+    } catch (err) {
+      console.error(err);
+      toast.error("建立失敗，請檢查資料庫連線或稍後再試");
     } finally {
       setLoading(false);
     }
