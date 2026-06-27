@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getMemberData } from "@/app/actions/member";
+import { BANK_INFO } from "@/lib/utils";
 import PaymentForm from "./PaymentForm";
 
 export const metadata = { title: "填寫匯款資料 | 中華台北羽球3對3發展協會" };
@@ -30,15 +31,15 @@ export default async function PaymentPage({
             <div className="space-y-1 text-gray-600">
               <div className="flex justify-between">
                 <span>銀行</span>
-                <span className="font-medium">臺灣銀行（004）</span>
+                <span className="font-medium">{BANK_INFO.bankName}（{BANK_INFO.bankCode}）</span>
               </div>
               <div className="flex justify-between">
                 <span>帳號</span>
-                <span className="font-medium">035-001-000000-1</span>
+                <span className="font-medium">{BANK_INFO.accountNumber}</span>
               </div>
               <div className="flex justify-between">
                 <span>戶名</span>
-                <span className="font-medium">中華台北羽球3對3發展協會</span>
+                <span className="font-medium">{BANK_INFO.accountName}</span>
               </div>
               <div className="flex justify-between border-t pt-2 mt-2">
                 <span className="font-semibold">應繳金額</span>
