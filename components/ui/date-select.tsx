@@ -79,7 +79,7 @@ export default function DateSelectPicker({
         onValueChange={(v) => emit(year, parseInt(v), day, hour, minute)}
         disabled={disabled}
       >
-        <SelectTrigger className="w-[72px] h-9">
+        <SelectTrigger className="w-[86px] h-9">
           <SelectValue placeholder="月" />
         </SelectTrigger>
         <SelectContent>
@@ -94,7 +94,7 @@ export default function DateSelectPicker({
         onValueChange={(v) => emit(year, month, parseInt(v), hour, minute)}
         disabled={disabled}
       >
-        <SelectTrigger className="w-[72px] h-9">
+        <SelectTrigger className="w-[86px] h-9">
           <SelectValue placeholder="日" />
         </SelectTrigger>
         <SelectContent>
