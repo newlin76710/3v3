@@ -46,22 +46,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   events: {
     async createUser({ user }) {
       console.log("New user created:", user.email);
-      // 新用戶建立時，自動關聯以 email 建立的孤立 Member（由報名流程產生）
-      if (user.email && user.id) {
-        try {
-          const orphaned = await prisma.member.findFirst({
-            where: { email: user.email, userId: null },
-          });
-          if (orphaned) {
-            await prisma.member.update({
-              where: { id: orphaned.id },
-              data: { userId: user.id },
-            });
-          }
-        } catch {
-          // 關聯失敗不影響帳號建立
-        }
-      }
     },
   },
 });

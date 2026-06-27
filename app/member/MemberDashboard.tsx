@@ -61,7 +61,7 @@ type Registration = {
   totalAmount: number;
   event: { name: string; date: Date; location: string; slug: string };
   group: { name: string };
-  players: Array<{ name: string; nationalId: string }>;
+  players: Array<{ name: string; nationalId: string; memberStatus: string; itemCount: number }>;
   payments: RegistrationPayment[];
 };
 
@@ -117,9 +117,23 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
     setEditing(false);
   };
 
+  // 若某筆報名裡本人是 NEW_MEMBER 第一項（700含入會費），則不重複顯示 MEMBERSHIP_FEE
+  const membershipCoveredByRegistration = member
+    ? registrations.some((r) =>
+        r.players.some(
+          (p) =>
+            p.nationalId === member.nationalId &&
+            p.memberStatus === "NEW_MEMBER" &&
+            p.itemCount === 1
+        )
+      )
+    : false;
+
   type AnyPayment = MemberPayment & { eventName?: string; teamName?: string };
   const allPayments: AnyPayment[] = [
-    ...(member?.payments ?? []),
+    ...(member?.payments ?? []).filter(
+      (p) => !(p.type === "MEMBERSHIP_FEE" && membershipCoveredByRegistration)
+    ),
     ...registrations.flatMap((r) =>
       r.payments.map((p) => ({ ...p, eventName: r.event.name, teamName: r.teamName }))
     ),

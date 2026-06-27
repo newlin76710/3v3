@@ -131,19 +131,7 @@ export async function getMemberData() {
     include,
   });
 
-  // 若無 Member，嘗試以 email 自動關聯孤立記錄
-  if (!member && session.user.email) {
-    const orphaned = await prisma.member.findFirst({
-      where: { email: session.user.email, userId: null },
-    });
-    if (orphaned) {
-      member = await prisma.member.update({
-        where: { id: orphaned.id },
-        data: { userId: session.user.id },
-        include,
-      });
-    }
-  }
+  // 孤立 Member 只能透過身分證字號認領（在入會申請或個人資料頁）
 
   return member;
 }

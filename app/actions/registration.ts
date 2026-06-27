@@ -167,66 +167,32 @@ export async function createRegistration(data: RegistrationFormData) {
     },
   });
 
-  // 為「新加入會員」選手嘗試自動建立入會申請
+  // 為「新加入會員」選手建立孤立 Member，日後由本人以身分證字號認領
   for (const player of playersWithFee) {
     if (player.memberStatus !== "NEW_MEMBER") continue;
 
-    // 若該身分證已有 Member 記錄則跳過
+    // 若該身分證已有 Member 記錄則跳過（無論是否已關聯帳號）
     const existingMember = await prisma.member.findUnique({
       where: { nationalId: player.nationalId },
     });
     if (existingMember) continue;
 
-    // 嘗試以手機號碼比對 User
-    let matchedUser = await prisma.user.findFirst({
-      where: { phone: player.phone },
-      include: { member: true },
-    });
-
-    // 若手機未找到，嘗試以 email 比對
-    if (!matchedUser && player.email) {
-      matchedUser = await prisma.user.findFirst({
-        where: { email: player.email },
-        include: { member: true },
-      });
-    }
-
     try {
-      if (matchedUser && !matchedUser.member) {
-        // 找到帳號且無 Member → 直接建立並關聯
-        await prisma.member.create({
-          data: {
-            userId: matchedUser.id,
-            memberNumber: generateMemberNumber(),
-            nationalId: player.nationalId,
-            realName: player.name,
-            birthday: new Date(player.birthday),
-            gender: player.gender,
-            phone: player.phone,
-            email: player.email || null,
-            expiresAt: addYears(new Date(), 1),
-            isActive: false,
-            paymentStatus: "PENDING",
-          },
-        });
-      } else if (!matchedUser) {
-        // 找不到帳號 → 建立孤立 Member，日後以 email 或身分證關聯
-        await prisma.member.create({
-          data: {
-            userId: null,
-            memberNumber: generateMemberNumber(),
-            nationalId: player.nationalId,
-            realName: player.name,
-            birthday: new Date(player.birthday),
-            gender: player.gender,
-            phone: player.phone,
-            email: player.email || null,
-            expiresAt: addYears(new Date(), 1),
-            isActive: false,
-            paymentStatus: "PENDING",
-          },
-        });
-      }
+      await prisma.member.create({
+        data: {
+          userId: null,
+          memberNumber: generateMemberNumber(),
+          nationalId: player.nationalId,
+          realName: player.name,
+          birthday: new Date(player.birthday),
+          gender: player.gender,
+          phone: player.phone,
+          email: player.email || null,
+          expiresAt: addYears(new Date(), 1),
+          isActive: false,
+          paymentStatus: "PENDING",
+        },
+      });
     } catch {
       // Member 建立失敗（如會員編號碰撞），不影響報名本身
     }
