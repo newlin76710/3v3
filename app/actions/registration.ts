@@ -3,8 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { differenceInYears } from "date-fns";
-import { calculatePlayerFee, BANK_INFO } from "@/lib/utils";
+import { differenceInYears, addYears } from "date-fns";
+import { calculatePlayerFee, generateMemberNumber, BANK_INFO } from "@/lib/utils";
 
 const playerSchema = z.object({
   name: z.string().min(2, "姓名至少2個字"),
@@ -15,6 +15,7 @@ const playerSchema = z.object({
   emergencyContact: z.string().optional().default(""),
   emergencyPhone: z.string().optional().default(""),
   memberStatus: z.enum(["ACTIVE_MEMBER", "NEW_MEMBER", "NON_MEMBER"]),
+  email: z.string().email("請輸入有效的電子信箱").optional().or(z.literal("")).default(""),
   itemCount: z.number().int().min(1).max(2).default(1),
 });
 
@@ -141,6 +142,7 @@ export async function createRegistration(data: RegistrationFormData) {
           nationalId: p.nationalId,
           birthday: new Date(p.birthday),
           phone: p.phone,
+          email: p.email || null,
           gender: p.gender,
           emergencyContact: p.emergencyContact,
           emergencyPhone: p.emergencyPhone,
@@ -165,6 +167,71 @@ export async function createRegistration(data: RegistrationFormData) {
     },
   });
 
+  // 為「新加入會員」選手嘗試自動建立入會申請
+  for (const player of playersWithFee) {
+    if (player.memberStatus !== "NEW_MEMBER") continue;
+
+    // 若該身分證已有 Member 記錄則跳過
+    const existingMember = await prisma.member.findUnique({
+      where: { nationalId: player.nationalId },
+    });
+    if (existingMember) continue;
+
+    // 嘗試以手機號碼比對 User
+    let matchedUser = await prisma.user.findFirst({
+      where: { phone: player.phone },
+      include: { member: true },
+    });
+
+    // 若手機未找到，嘗試以 email 比對
+    if (!matchedUser && player.email) {
+      matchedUser = await prisma.user.findFirst({
+        where: { email: player.email },
+        include: { member: true },
+      });
+    }
+
+    try {
+      if (matchedUser && !matchedUser.member) {
+        // 找到帳號且無 Member → 直接建立並關聯
+        await prisma.member.create({
+          data: {
+            userId: matchedUser.id,
+            memberNumber: generateMemberNumber(),
+            nationalId: player.nationalId,
+            realName: player.name,
+            birthday: new Date(player.birthday),
+            gender: player.gender,
+            phone: player.phone,
+            email: player.email || null,
+            expiresAt: addYears(new Date(), 1),
+            isActive: false,
+            paymentStatus: "PENDING",
+          },
+        });
+      } else if (!matchedUser) {
+        // 找不到帳號 → 建立孤立 Member，日後以 email 或身分證關聯
+        await prisma.member.create({
+          data: {
+            userId: null,
+            memberNumber: generateMemberNumber(),
+            nationalId: player.nationalId,
+            realName: player.name,
+            birthday: new Date(player.birthday),
+            gender: player.gender,
+            phone: player.phone,
+            email: player.email || null,
+            expiresAt: addYears(new Date(), 1),
+            isActive: false,
+            paymentStatus: "PENDING",
+          },
+        });
+      }
+    } catch {
+      // Member 建立失敗（如會員編號碰撞），不影響報名本身
+    }
+  }
+
   revalidatePath(`/events/${event.slug}`);
   revalidatePath("/member");
   return { success: true, registrationId: registration.id, totalAmount };
@@ -185,6 +252,7 @@ export async function submitRegistrationPayment(data: z.infer<typeof paymentConf
 
   const registration = await prisma.registration.findUnique({
     where: { id: parsed.data.registrationId },
+    include: { players: { select: { nationalId: true, memberStatus: true } } },
   });
   if (!registration) return { error: "找不到報名資料" };
   if (registration.createdById !== session.user.id) return { error: "無權限" };
@@ -206,6 +274,21 @@ export async function submitRegistrationPayment(data: z.infer<typeof paymentConf
       status: "CONFIRMING",
     },
   });
+
+  // 同步更新新入會選手的 Member 繳費狀態為「待確認」
+  const newMemberIds = registration.players
+    .filter((p) => p.memberStatus === "NEW_MEMBER")
+    .map((p) => p.nationalId);
+  if (newMemberIds.length > 0) {
+    await prisma.member.updateMany({
+      where: { nationalId: { in: newMemberIds }, paymentStatus: "PENDING" },
+      data: {
+        transferLastFive: parsed.data.transferLastFive,
+        transferDate: new Date(parsed.data.transferDate),
+        paymentStatus: "CONFIRMING",
+      },
+    });
+  }
 
   revalidatePath("/member");
   return { success: true };
@@ -253,6 +336,7 @@ export async function getMyRegistrations() {
       event: { select: { name: true, date: true, location: true, slug: true } },
       group: { select: { name: true } },
       players: true,
+      payments: true,
     },
     orderBy: { createdAt: "desc" },
   });

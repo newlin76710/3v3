@@ -21,7 +21,7 @@ type Member = {
   expiresAt: Date;
   paymentStatus: string;
   createdAt: Date;
-  user: { email: string | null; name: string | null };
+  user: { email: string | null; name: string | null } | null;
 };
 
 interface Props {
@@ -115,7 +115,7 @@ export default function MembersTable({ members, pages, currentPage }: Props) {
                     <TableCell>
                       <div>
                         <p className="font-medium">{member.realName}</p>
-                        <p className="text-xs text-gray-400">{member.user.email}</p>
+                        <p className="text-xs text-gray-400">{member.user?.email}</p>
                       </div>
                     </TableCell>
                     <TableCell className="font-mono text-sm">{member.nationalId}</TableCell>

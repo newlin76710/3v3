@@ -19,7 +19,7 @@ type PendingMember = {
   transferLastFive: string | null;
   transferDate: Date | null;
   createdAt: Date;
-  user: { email: string | null; name: string | null };
+  user: { email: string | null; name: string | null } | null;
 };
 
 type PendingRegistration = {
@@ -117,7 +117,7 @@ export default function PaymentsManager({ pendingMembers, pendingRegistrations }
                         <span>會員編號：{member.memberNumber}</span>
                         <span>身分證：{member.nationalId}</span>
                         <span>手機：{member.phone}</span>
-                        <span>Email：{member.user.email}</span>
+                        <span>Email：{member.user?.email}</span>
                         <span>匯款末5碼：<strong className="text-gray-900 font-mono">{member.transferLastFive ?? "未填"}</strong></span>
                         <span>匯款日期：{member.transferDate ? formatDate(member.transferDate) : "未填"}</span>
                         <span className="text-gray-400">申請時間：{formatDate(member.createdAt)}</span>

@@ -28,13 +28,21 @@ export async function registerMember(data: MemberFormData) {
 
   const { realName, nationalId, birthday, gender, phone, address } = parsed.data;
 
-  // 檢查身分證是否已存在
-  const existing = await prisma.member.findUnique({ where: { nationalId } });
-  if (existing) return { error: "此身分證字號已註冊為會員" };
-
   // 檢查此用戶是否已有會員資料
   const existingUser = await prisma.member.findUnique({ where: { userId: session.user.id } });
   if (existingUser) return { error: "您已有會員申請紀錄" };
+
+  // 若孤立 Member 已存在（由報名流程建立），直接關聯
+  const orphaned = await prisma.member.findUnique({ where: { nationalId } });
+  if (orphaned) {
+    if (orphaned.userId) return { error: "此身分證字號已註冊為會員" };
+    await prisma.member.update({
+      where: { id: orphaned.id },
+      data: { userId: session.user.id },
+    });
+    revalidatePath("/member");
+    return { success: true, memberNumber: orphaned.memberNumber, linked: true };
+  }
 
   const memberNumber = generateMemberNumber();
   const expiresAt = addYears(new Date(), MEMBERSHIP_DURATION_YEARS);
@@ -113,13 +121,31 @@ export async function getMemberData() {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  return prisma.member.findUnique({
+  const include = {
+    payments: { orderBy: { createdAt: "desc" } as const },
+    user: { select: { name: true, email: true, image: true } },
+  };
+
+  let member = await prisma.member.findUnique({
     where: { userId: session.user.id },
-    include: {
-      payments: { orderBy: { createdAt: "desc" } },
-      user: { select: { name: true, email: true, image: true } },
-    },
+    include,
   });
+
+  // 若無 Member，嘗試以 email 自動關聯孤立記錄
+  if (!member && session.user.email) {
+    const orphaned = await prisma.member.findFirst({
+      where: { email: session.user.email, userId: null },
+    });
+    if (orphaned) {
+      member = await prisma.member.update({
+        where: { id: orphaned.id },
+        data: { userId: session.user.id },
+        include,
+      });
+    }
+  }
+
+  return member;
 }
 
 export async function renewMembership(data: z.infer<typeof paymentSchema>) {
@@ -144,6 +170,109 @@ export async function renewMembership(data: z.infer<typeof paymentSchema>) {
       bankAccount: BANK_INFO.accountNumber,
     },
   });
+
+  revalidatePath("/member");
+  return { success: true };
+}
+
+const updateProfileSchema = z.object({
+  realName: z.string().min(2, "姓名至少2個字"),
+  birthday: z.string().refine((d) => !isNaN(Date.parse(d)), "請輸入有效日期"),
+  gender: z.enum(["MALE", "FEMALE"]),
+  phone: z.string().regex(/^09\d{8}$/, "請輸入有效的手機號碼"),
+  address: z.string().optional(),
+  email: z.string().email("請輸入有效的電子信箱").optional().or(z.literal("")),
+  nationalId: z.string().regex(/^[A-Z][12]\d{8}$/, "請輸入有效的身分證字號").optional(),
+});
+
+export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
+
+export async function updateMemberProfile(data: UpdateProfileData) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "請先登入" };
+
+  const parsed = updateProfileSchema.safeParse(data);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const member = await prisma.member.findUnique({ where: { userId: session.user.id } });
+  if (!member) return { error: "找不到會員資料" };
+
+  const updateData: Record<string, unknown> = {
+    realName: parsed.data.realName,
+    birthday: new Date(parsed.data.birthday),
+    gender: parsed.data.gender,
+    phone: parsed.data.phone,
+    address: parsed.data.address || null,
+    email: parsed.data.email || null,
+  };
+
+  // 身分證字號：只能改一次
+  const newNationalId = parsed.data.nationalId && parsed.data.nationalId !== member.nationalId
+    ? parsed.data.nationalId : null;
+
+  if (newNationalId) {
+    if (member.nationalIdChangedAt) {
+      return { error: "身分證字號只能修改一次，如需修改請寄信至 info@weekielife.com 聯絡官方" };
+    }
+    const taken = await prisma.member.findUnique({ where: { nationalId: newNationalId } });
+    if (taken) {
+      if (taken.userId) return { error: "此身分證字號已被其他會員使用" };
+      // 孤立 Member（由報名流程建立）→ 合併付款記錄後刪除
+      await prisma.payment.updateMany({
+        where: { memberId: taken.id },
+        data: { memberId: member.id },
+      });
+      await prisma.member.delete({ where: { id: taken.id } });
+    }
+    updateData.nationalId = newNationalId;
+    updateData.nationalIdChangedAt = new Date();
+  }
+
+  await prisma.member.update({ where: { id: member.id }, data: updateData });
+
+  // 比對報名記錄，看是否已透過報名費付過入會費（NEW_MEMBER）
+  const effectiveNationalId = newNationalId ?? member.nationalId;
+  const effectivePhone = parsed.data.phone;
+  const nationalIdChanged = !!newNationalId;
+  const phoneChanged = parsed.data.phone !== member.phone;
+
+  if (nationalIdChanged || phoneChanged) {
+    const regPlayers = await prisma.registrationPlayer.findMany({
+      where: {
+        OR: [
+          { nationalId: effectiveNationalId },
+          { phone: effectivePhone },
+        ],
+        memberStatus: "NEW_MEMBER",
+      },
+      include: {
+        registration: { select: { paymentStatus: true } },
+      },
+    });
+
+    if (regPlayers.length > 0) {
+      const statuses = regPlayers.map((p) => p.registration.paymentStatus);
+      const refreshed = await prisma.member.findUnique({ where: { id: member.id } });
+      if (refreshed && refreshed.paymentStatus === "PENDING") {
+        if (statuses.includes("PAID")) {
+          await prisma.member.update({
+            where: { id: member.id },
+            data: {
+              paymentStatus: "PAID",
+              isActive: true,
+              confirmedAt: new Date(),
+              expiresAt: addYears(new Date(), 1),
+            },
+          });
+        } else if (statuses.includes("CONFIRMING")) {
+          await prisma.member.update({
+            where: { id: member.id },
+            data: { paymentStatus: "CONFIRMING" },
+          });
+        }
+      }
+    }
+  }
 
   revalidatePath("/member");
   return { success: true };

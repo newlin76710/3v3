@@ -1,30 +1,56 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import DateSelectPicker from "@/components/ui/date-select";
+import { updateMemberProfile } from "@/app/actions/member";
+import type { UpdateProfileData } from "@/app/actions/member";
 import {
-  User, CreditCard, Trophy, LogOut, Plus, AlertCircle, CheckCircle, Clock, Settings,
+  User, CreditCard, Trophy, LogOut, Plus, AlertCircle, Clock, Settings, Pencil, X, Info,
 } from "lucide-react";
+
+type MemberPayment = {
+  id: string;
+  type: string;
+  amount: number;
+  status: string;
+  createdAt: Date;
+  transferDate?: Date | null;
+  transferLastFive?: string | null;
+};
 
 type Member = {
   id: string;
   memberNumber: string;
   realName: string;
   nationalId: string;
+  birthday: Date;
+  gender: string;
+  phone: string;
+  address: string | null;
+  email: string | null;
   expiresAt: Date;
   isActive: boolean;
   paymentStatus: string;
-  payments: Array<{
-    id: string;
-    type: string;
-    amount: number;
-    status: string;
-    createdAt: Date;
-  }>;
+  nationalIdChangedAt: Date | null;
+  payments: MemberPayment[];
+};
+
+type RegistrationPayment = {
+  id: string;
+  type: string;
+  amount: number;
+  status: string;
+  createdAt: Date;
 };
 
 type Registration = {
@@ -36,6 +62,7 @@ type Registration = {
   event: { name: string; date: Date; location: string; slug: string };
   group: { name: string };
   players: Array<{ name: string; nationalId: string }>;
+  payments: RegistrationPayment[];
 };
 
 interface Props {
@@ -57,14 +84,49 @@ const paymentTypeMap: Record<string, string> = {
   RENEWAL_FEE: "續會費",
 };
 
+function toDateStr(d: Date | string | null | undefined): string {
+  if (!d) return "";
+  const dt = new Date(d);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+}
+
 export default function MemberDashboard({ user, member, registrations }: Props) {
   const isExpired = member?.expiresAt ? new Date(member.expiresAt) < new Date() : true;
   const isActiveMember = member?.isActive && !isExpired;
   const isAdmin = user.role === "ADMIN" || user.role === "STAFF";
 
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState<UpdateProfileData>({
+    realName: member?.realName ?? "",
+    birthday: toDateStr(member?.birthday),
+    gender: (member?.gender as "MALE" | "FEMALE") ?? "MALE",
+    phone: member?.phone ?? "",
+    address: member?.address ?? "",
+    email: member?.email ?? "",
+    nationalId: member?.nationalId ?? "",
+  });
+
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    const result = await updateMemberProfile(editForm);
+    setSaving(false);
+    if (result.error) { toast.error(result.error); return; }
+    toast.success("資料已更新");
+    setEditing(false);
+  };
+
+  type AnyPayment = MemberPayment & { eventName?: string; teamName?: string };
+  const allPayments: AnyPayment[] = [
+    ...(member?.payments ?? []),
+    ...registrations.flatMap((r) =>
+      r.payments.map((p) => ({ ...p, eventName: r.event.name, teamName: r.teamName }))
+    ),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
@@ -84,12 +146,7 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
               <img src={user.image} alt={user.name ?? ""} className="w-8 h-8 rounded-full" />
             )}
             <span className="text-sm text-gray-600 hidden sm:block">{user.name}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="text-gray-500"
-            >
+            <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/" })} className="text-gray-500">
               <LogOut className="w-4 h-4 mr-1" />
               登出
             </Button>
@@ -100,7 +157,6 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
       <main className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">會員中心</h1>
 
-        {/* 會員卡 */}
         {member ? (
           <div className="mb-8">
             <div
@@ -112,26 +168,20 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
             >
               <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-
               <div className="relative">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <p className="text-white/70 text-sm">中華台北羽球3對3發展協會</p>
                     <p className="text-white/70 text-xs">CHINESE TAIPEI 3V3 BADMINTON ASSOCIATION</p>
                   </div>
-                  <Badge
-                    variant={isActiveMember ? "success" : "destructive"}
-                    className="text-xs"
-                  >
+                  <Badge variant={isActiveMember ? "success" : "destructive"} className="text-xs">
                     {isActiveMember ? "有效會員" : isExpired ? "已過期" : member.paymentStatus === "CONFIRMING" ? "審核中" : "未繳費"}
                   </Badge>
                 </div>
-
                 <div className="mb-4">
                   <p className="text-3xl font-bold">{member.realName}</p>
                   <p className="text-white/80 text-sm mt-1">會員編號：{member.memberNumber}</p>
                 </div>
-
                 <div className="flex items-center justify-between text-sm">
                   <div>
                     <p className="text-white/60">會員到期日</p>
@@ -145,7 +195,6 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
               </div>
             </div>
 
-            {/* 付款提示 */}
             {member.paymentStatus === "PENDING" && (
               <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex gap-3">
                 <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
@@ -179,23 +228,18 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                     <p className="text-sm text-orange-700 mt-1">請續繳年費 NT$ 500 以繼續享有會員權益。</p>
                   </div>
                   <Link href="/member/renew">
-                    <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
-                      立即續會
-                    </Button>
+                    <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">立即續會</Button>
                   </Link>
                 </div>
               </div>
             )}
           </div>
         ) : (
-          /* 尚未申請會員 */
           <Card className="mb-8 border-dashed border-2">
             <CardContent className="py-12 text-center">
               <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-gray-700 mb-2">尚未申請協會會員</h2>
-              <p className="text-gray-500 mb-6">
-                繳交年費 NT$ 500 成為協會會員，享有報名優惠及更多會員專屬服務。
-              </p>
+              <p className="text-gray-500 mb-6">繳交年費 NT$ 500 成為協會會員，享有報名優惠及更多會員專屬服務。</p>
               <Link href="/member/join">
                 <Button size="lg" className="gap-2">
                   <Plus className="w-4 h-4" />
@@ -206,7 +250,6 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
           </Card>
         )}
 
-        {/* Tabs */}
         <Tabs defaultValue="registrations">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="registrations">
@@ -223,7 +266,6 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
             </TabsTrigger>
           </TabsList>
 
-          {/* 報名紀錄 */}
           <TabsContent value="registrations" className="mt-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">我的報名紀錄</h2>
@@ -270,14 +312,10 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                             </p>
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="font-bold text-lg text-gray-900">
-                              {formatCurrency(reg.totalAmount)}
-                            </p>
+                            <p className="font-bold text-lg text-gray-900">{formatCurrency(reg.totalAmount)}</p>
                             {reg.paymentStatus === "PENDING" && (
                               <Link href={`/member/payment?id=${reg.id}`}>
-                                <Button size="sm" className="mt-2">
-                                  填寫匯款資料
-                                </Button>
+                                <Button size="sm" className="mt-2">填寫匯款資料</Button>
                               </Link>
                             )}
                           </div>
@@ -290,10 +328,9 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
             )}
           </TabsContent>
 
-          {/* 付款紀錄 */}
           <TabsContent value="payments" className="mt-4">
             <h2 className="text-lg font-semibold mb-4">付款紀錄</h2>
-            {!member || member.payments.length === 0 ? (
+            {allPayments.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center text-gray-500">
                   <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -302,16 +339,20 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
               </Card>
             ) : (
               <div className="space-y-3">
-                {member.payments.map((payment) => {
+                {allPayments.map((payment) => {
                   const status = statusMap[payment.status as keyof typeof statusMap];
+                  const p = payment as AnyPayment;
                   return (
                     <Card key={payment.id}>
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div>
+                      <CardContent className="p-4 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
                           <p className="font-medium">{paymentTypeMap[payment.type] ?? payment.type}</p>
+                          {p.eventName && (
+                            <p className="text-xs text-gray-500 truncate">{p.eventName}｜{p.teamName}</p>
+                          )}
                           <p className="text-xs text-gray-400">{formatDate(payment.createdAt)}</p>
                         </div>
-                        <div className="text-right flex items-center gap-3">
+                        <div className="text-right flex items-center gap-3 shrink-0">
                           <Badge variant={status.color}>{status.label}</Badge>
                           <p className="font-bold">{formatCurrency(payment.amount)}</p>
                         </div>
@@ -323,23 +364,35 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
             )}
           </TabsContent>
 
-          {/* 個人資料 */}
           <TabsContent value="profile" className="mt-4">
             <Card>
               <CardHeader>
-                <CardTitle>個人資料</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>個人資料</CardTitle>
+                  {member && !editing && (
+                    <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="gap-1">
+                      <Pencil className="w-3.5 h-3.5" />
+                      編輯
+                    </Button>
+                  )}
+                  {editing && (
+                    <Button variant="ghost" size="sm" onClick={() => setEditing(false)} className="gap-1 text-gray-500">
+                      <X className="w-3.5 h-3.5" />
+                      取消
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
-                  {user.image && (
-                    <img src={user.image} alt="" className="w-16 h-16 rounded-full" />
-                  )}
+                  {user.image && <img src={user.image} alt="" className="w-16 h-16 rounded-full" />}
                   <div>
                     <p className="font-semibold text-lg">{user.name}</p>
                     <p className="text-gray-500 text-sm">{user.email}</p>
                   </div>
                 </div>
-                {member && (
+
+                {member && !editing && (
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                     <div>
                       <p className="text-xs text-gray-400">真實姓名</p>
@@ -351,10 +404,130 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                     </div>
                     <div>
                       <p className="text-xs text-gray-400">身分證字號</p>
-                      <p className="font-medium">
-                        {member.nationalId.slice(0, 3)}****{member.nationalId.slice(-2)}
-                      </p>
+                      <p className="font-medium">{member.nationalId.slice(0, 3)}****{member.nationalId.slice(-2)}</p>
                     </div>
+                    <div>
+                      <p className="text-xs text-gray-400">性別</p>
+                      <p className="font-medium">{member.gender === "MALE" ? "男" : "女"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400">手機號碼</p>
+                      <p className="font-medium">{member.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400">出生日期</p>
+                      <p className="font-medium">{formatDate(member.birthday)}</p>
+                    </div>
+                    {member.address && (
+                      <div className="col-span-2">
+                        <p className="text-xs text-gray-400">地址</p>
+                        <p className="font-medium">{member.address}</p>
+                      </div>
+                    )}
+                    {member.email && (
+                      <div className="col-span-2">
+                        <p className="text-xs text-gray-400">聯絡信箱</p>
+                        <p className="font-medium">{member.email}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {member && editing && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label>真實姓名 *</Label>
+                        <Input
+                          value={editForm.realName}
+                          onChange={(e) => setEditForm((f) => ({ ...f, realName: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>性別 *</Label>
+                        <Select
+                          value={editForm.gender}
+                          onValueChange={(v) => setEditForm((f) => ({ ...f, gender: v as "MALE" | "FEMALE" }))}
+                        >
+                          <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="MALE">男</SelectItem>
+                            <SelectItem value="FEMALE">女</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <Label>出生日期 *</Label>
+                        <DateSelectPicker
+                          value={editForm.birthday ?? ""}
+                          onChange={(v) => setEditForm((f) => ({ ...f, birthday: v }))}
+                          maxYear={new Date().getFullYear()}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>手機號碼 *</Label>
+                        <Input
+                          value={editForm.phone}
+                          onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                          placeholder="09xxxxxxxx"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label>聯絡信箱（選填）</Label>
+                        <Input
+                          value={editForm.email ?? ""}
+                          onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                          placeholder="your@email.com"
+                          type="email"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <Label>地址（選填）</Label>
+                        <Input
+                          value={editForm.address ?? ""}
+                          onChange={(e) => setEditForm((f) => ({ ...f, address: e.target.value }))}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg p-4 bg-gray-50">
+                      <Label className="flex items-center gap-1.5 mb-2">
+                        身分證字號
+                        {member.nationalIdChangedAt ? (
+                          <Badge variant="secondary" className="text-xs">已鎖定</Badge>
+                        ) : (
+                          <Badge variant="warning" className="text-xs">只能改一次</Badge>
+                        )}
+                      </Label>
+                      {member.nationalIdChangedAt ? (
+                        <div>
+                          <p className="text-sm font-medium">{editForm.nationalId}</p>
+                          <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <Info className="w-3 h-3" />
+                            如需修改，請寄信至 info@weekielife.com 聯絡官方
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <Input
+                            value={editForm.nationalId ?? ""}
+                            onChange={(e) => setEditForm((f) => ({ ...f, nationalId: e.target.value.toUpperCase() }))}
+                            maxLength={10}
+                            className="mt-1"
+                          />
+                          <p className="text-xs text-amber-600 mt-1">⚠ 修改後無法再次更改，請確認正確</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+                      {saving ? "儲存中..." : "儲存變更"}
+                    </Button>
                   </div>
                 )}
               </CardContent>

@@ -52,17 +52,48 @@ export async function confirmRegistrationPayment(registrationId: string): Promis
   try {
     await requireAdmin();
 
+    const now = new Date();
+
+    // 取得報名資料與選手（確認是否有新入會選手）
+    const registration = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      include: { players: { select: { nationalId: true, memberStatus: true } } },
+    });
+    if (!registration) return { success: false, error: "找不到報名資料" };
+
     await prisma.registration.update({
       where: { id: registrationId },
-      data: { paymentStatus: "PAID", confirmedAt: new Date() },
+      data: { paymentStatus: "PAID", confirmedAt: now },
     });
 
     await prisma.payment.updateMany({
       where: { registrationId, status: "CONFIRMING" },
-      data: { status: "PAID", confirmedAt: new Date() },
+      data: { status: "PAID", confirmedAt: now },
     });
 
+    // 同步啟用新入會選手的 Member 記錄
+    const newMemberIds = registration.players
+      .filter((p) => p.memberStatus === "NEW_MEMBER")
+      .map((p) => p.nationalId);
+
+    for (const nationalId of newMemberIds) {
+      const member = await prisma.member.findUnique({ where: { nationalId } });
+      if (member && !member.isActive) {
+        const currentExpiry = member.expiresAt < now ? now : member.expiresAt;
+        await prisma.member.update({
+          where: { id: member.id },
+          data: {
+            isActive: true,
+            paymentStatus: "PAID",
+            expiresAt: addYears(currentExpiry, 1),
+            confirmedAt: now,
+          },
+        });
+      }
+    }
+
     revalidatePath("/admin/registrations");
+    revalidatePath("/admin/members");
     return { success: true };
   } catch (e) {
     return { success: false, error: (e as Error).message };

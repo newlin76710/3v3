@@ -30,6 +30,7 @@ type PlayerData = {
   nationalId: string;
   birthday: string;
   phone: string;
+  email: string;
   gender: "MALE" | "FEMALE" | "";
   emergencyContact: string;
   emergencyPhone: string;
@@ -40,7 +41,7 @@ type DuplicateInfo = { isSecondItem: boolean; groupName: string | null } | null;
 
 const emptyPlayer = (): PlayerData => ({
   name: "", nationalId: "", birthday: "", phone: "",
-  gender: "", emergencyContact: "", emergencyPhone: "",
+  email: "", gender: "", emergencyContact: "", emergencyPhone: "",
   memberStatus: "NON_MEMBER",
 });
 
@@ -339,6 +340,12 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
                   <Label>手機號碼 *</Label>
                   <Input value={player.phone} onChange={(e) => updatePlayer(index, "phone", e.target.value)}
                     placeholder="09xxxxxxxx" className="mt-1" />
+                </div>
+                <div>
+                  <Label>電子信箱（選填）</Label>
+                  <Input value={player.email} onChange={(e) => updatePlayer(index, "email", e.target.value)}
+                    placeholder="your@email.com" type="email" className="mt-1" />
+                  <p className="text-xs text-gray-400 mt-1">填寫後可自動關聯入會申請</p>
                 </div>
                 <div>
                   <Label>緊急聯絡人</Label>

@@ -108,7 +108,7 @@ model VerificationToken {
 
 model Member {
   id               String        @id @default(cuid())
-  userId           String        @unique
+  userId           String?       @unique
   memberNumber     String        @unique
   nationalId       String        @unique
   realName         String
@@ -116,6 +116,7 @@ model Member {
   gender           Gender
   phone            String
   address          String?
+  email            String?
   expiresAt        DateTime
   isActive         Boolean       @default(false)
   paymentStatus    PaymentStatus @default(PENDING)
@@ -123,10 +124,11 @@ model Member {
   transferDate     DateTime?
   confirmedAt      DateTime?
   confirmedBy      String?
+  nationalIdChangedAt DateTime?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   payments Payment[]
 }
 
@@ -199,6 +201,7 @@ model RegistrationPlayer {
   nationalId       String
   birthday         DateTime
   phone            String
+  email            String?
   gender           Gender
   emergencyContact String
   emergencyPhone   String
