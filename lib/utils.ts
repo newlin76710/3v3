@@ -60,7 +60,7 @@ export function validateNationalId(id: string): boolean {
 export const BANK_INFO = {
   bankName: "中國信託",
   bankCode: "822",
-  accountNumber: "178540107748", // 請替換實際帳號
+  accountNumber: "178540107748",
   accountName: "林成翰",
 };
 

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getMemberData } from "@/app/actions/member";
+import { BANK_INFO } from "@/lib/utils";
 import JoinMemberForm from "./JoinMemberForm";
 
 export const metadata = { title: "申請入會 | 中華台北羽球3對3發展協會" };
@@ -28,9 +29,9 @@ export default async function JoinPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <h3 className="font-semibold text-blue-800 mb-2">匯款資訊</h3>
             <div className="text-sm text-blue-700 space-y-1">
-              <p>銀行：臺灣銀行（004）</p>
-              <p>帳號：035-001-000000-1</p>
-              <p>戶名：中華台北羽球3對3發展協會</p>
+              <p>銀行：{BANK_INFO.bankName}（{BANK_INFO.bankCode}）</p>
+              <p>帳號：{BANK_INFO.accountNumber}</p>
+              <p>戶名：{BANK_INFO.accountName}</p>
               <p className="font-semibold">金額：NT$ 500</p>
             </div>
           </div>
