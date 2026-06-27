@@ -12,8 +12,8 @@ const playerSchema = z.object({
   birthday: z.string().refine((d) => !isNaN(Date.parse(d)), "請輸入有效生日"),
   phone: z.string().regex(/^09\d{8}$/, "請輸入有效手機號碼"),
   gender: z.enum(["MALE", "FEMALE"]),
-  emergencyContact: z.string().min(2, "請輸入緊急聯絡人"),
-  emergencyPhone: z.string().min(8, "請輸入緊急聯絡電話"),
+  emergencyContact: z.string().optional().default(""),
+  emergencyPhone: z.string().optional().default(""),
   memberStatus: z.enum(["ACTIVE_MEMBER", "NEW_MEMBER", "NON_MEMBER"]),
   itemCount: z.number().int().min(1).max(2).default(1),
 });

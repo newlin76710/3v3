@@ -166,7 +166,7 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
     if (errors.length > 0) { toast.error(errors[0]); return; }
     for (let i = 0; i < players.length; i++) {
       const p = players[i];
-      if (!p.name || !p.nationalId || !p.birthday || !p.phone || !p.gender || !p.emergencyContact || !p.emergencyPhone) {
+      if (!p.name || !p.nationalId || !p.birthday || !p.phone || !p.gender) {
         toast.error(`請完整填寫第 ${i + 1} 位選手資料`);
         return;
       }
@@ -341,14 +341,14 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
                     placeholder="09xxxxxxxx" className="mt-1" />
                 </div>
                 <div>
-                  <Label>緊急聯絡人 *</Label>
+                  <Label>緊急聯絡人</Label>
                   <Input value={player.emergencyContact} onChange={(e) => updatePlayer(index, "emergencyContact", e.target.value)}
-                    placeholder="緊急聯絡人姓名" className="mt-1" />
+                    placeholder="緊急聯絡人姓名（選填）" className="mt-1" />
                 </div>
                 <div>
-                  <Label>緊急聯絡電話 *</Label>
+                  <Label>緊急聯絡電話</Label>
                   <Input value={player.emergencyPhone} onChange={(e) => updatePlayer(index, "emergencyPhone", e.target.value)}
-                    placeholder="緊急聯絡電話" className="mt-1" />
+                    placeholder="緊急聯絡電話（選填）" className="mt-1" />
                 </div>
 
                 <div className="sm:col-span-2">
