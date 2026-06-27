@@ -97,28 +97,31 @@ export async function createRegistration(data: RegistrationFormData) {
     return { error: "同一隊伍中身分證字號不能重複" };
   }
 
-  // 驗證身分證不重複（整個賽事）
-  const existingPlayers = await prisma.registrationPlayer.findMany({
+  // 驗證身分證重複上限（同賽事最多2筆）
+  const existingPlayerRecords = await prisma.registrationPlayer.findMany({
     where: {
       nationalId: { in: nationalIds },
-      registration: {
-        eventId,
-        paymentStatus: { not: "CANCELLED" },
-      },
+      registration: { eventId, paymentStatus: { not: "CANCELLED" } },
     },
+    select: { nationalId: true },
   });
-  if (existingPlayers.length > 0) {
-    const dup = existingPlayers[0].nationalId;
-    return { error: `身分證 ${dup.slice(0, 3)}****${dup.slice(-2)} 已在此賽事中報名` };
+
+  const existingCounts = new Map<string, number>();
+  for (const p of existingPlayerRecords) {
+    existingCounts.set(p.nationalId, (existingCounts.get(p.nationalId) ?? 0) + 1);
   }
+  for (const id of nationalIds) {
+    if ((existingCounts.get(id) ?? 0) >= 2) {
+      return { error: `身分證 ${id.slice(0, 3)}****${id.slice(-2)} 已達報名上限（2個組別）` };
+    }
+  }
+
+  const isSecondItem = (id: string) => (existingCounts.get(id) ?? 0) >= 1;
 
   // 計算費用
   const playersWithFee = players.map((p) => ({
     ...p,
-    fee: calculatePlayerFee(
-      p.memberStatus,
-      p.itemCount as 1 | 2
-    ),
+    fee: calculatePlayerFee(p.memberStatus, isSecondItem(p.nationalId)),
   }));
   const totalAmount = playersWithFee.reduce((sum, p) => sum + p.fee, 0);
 
@@ -142,7 +145,7 @@ export async function createRegistration(data: RegistrationFormData) {
           emergencyContact: p.emergencyContact,
           emergencyPhone: p.emergencyPhone,
           memberStatus: p.memberStatus,
-          itemCount: p.itemCount,
+          itemCount: isSecondItem(p.nationalId) ? 2 : 1,
           fee: p.fee,
         })),
       },
@@ -206,6 +209,38 @@ export async function submitRegistrationPayment(data: z.infer<typeof paymentConf
 
   revalidatePath("/member");
   return { success: true };
+}
+
+// 提交前預查：哪些身分證在本賽事已有報名（回傳第2項資訊）
+export async function checkPlayerDuplicates(
+  nationalIds: string[],
+  eventId: string
+): Promise<{ nationalId: string; isSecondItem: boolean; groupName: string | null }[]> {
+  const session = await auth();
+  if (!session?.user?.id) return nationalIds.map((id) => ({ nationalId: id, isSecondItem: false, groupName: null }));
+
+  const valid = nationalIds.filter((id) => /^[A-Z][12]\d{8}$/.test(id));
+  if (valid.length === 0) return nationalIds.map((id) => ({ nationalId: id, isSecondItem: false, groupName: null }));
+
+  const existing = await prisma.registrationPlayer.findMany({
+    where: {
+      nationalId: { in: valid },
+      registration: { eventId, paymentStatus: { not: "CANCELLED" } },
+    },
+    select: {
+      nationalId: true,
+      registration: { select: { group: { select: { name: true } } } },
+    },
+  });
+
+  return nationalIds.map((id) => {
+    const records = existing.filter((p) => p.nationalId === id);
+    return {
+      nationalId: id,
+      isSecondItem: records.length > 0,
+      groupName: records[0]?.registration.group.name ?? null,
+    };
+  });
 }
 
 export async function getMyRegistrations() {

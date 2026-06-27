@@ -25,17 +25,19 @@ export function generateMemberNumber(): string {
 }
 
 // 計算報名費
+// isSecondItem: 同選手在同賽事的第2筆報名（第2組別）
 export function calculatePlayerFee(
   memberStatus: "ACTIVE_MEMBER" | "NEW_MEMBER" | "NON_MEMBER",
-  itemCount: 1 | 2
+  isSecondItem: boolean = false
 ): number {
+  if (isSecondItem) {
+    // 第2項：會員已含在首次200/700內，非會員再收450（合計900）
+    return memberStatus === "NON_MEMBER" ? 450 : 0;
+  }
   switch (memberStatus) {
-    case "ACTIVE_MEMBER":
-      return 200; // 固定200，不管幾項
-    case "NEW_MEMBER":
-      return 700; // 500年費 + 200報名費
-    case "NON_MEMBER":
-      return itemCount === 1 ? 450 : 900;
+    case "ACTIVE_MEMBER": return 200;
+    case "NEW_MEMBER":    return 700;
+    case "NON_MEMBER":    return 450;
   }
 }
 
