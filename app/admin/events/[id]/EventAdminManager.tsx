@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { updateEvent, createEventGroup } from "@/app/actions/event";
+import { updateEvent, createEventGroup, deleteEventGroup } from "@/app/actions/event";
 import { formatDate } from "@/lib/utils";
-import { Plus, Loader2, Users } from "lucide-react";
+import { Plus, Loader2, Users, Trash2 } from "lucide-react";
 
 type Group = {
   id: string;
@@ -48,6 +48,7 @@ export default function EventAdminManager({ event }: Props) {
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [deletingGroupId, setDeletingGroupId] = useState<string | null>(null);
   const [newGroup, setNewGroup] = useState({
     name: "",
     minTotalAge: 150,
@@ -79,6 +80,15 @@ export default function EventAdminManager({ event }: Props) {
     if (result.error) toast.error(result.error);
     else { toast.success("組別已建立！"); setShowGroupForm(false); router.refresh(); }
     setLoading(false);
+  };
+
+  const handleDeleteGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`確定要刪除「${groupName}」組別嗎？`)) return;
+    setDeletingGroupId(groupId);
+    const result = await deleteEventGroup(groupId);
+    if (result.error) toast.error(result.error);
+    else { toast.success("組別已刪除"); router.refresh(); }
+    setDeletingGroupId(null);
   };
 
   const toggleGender = (gender: string) => {
@@ -230,14 +240,26 @@ export default function EventAdminManager({ event }: Props) {
                       <span>個人 {group.minIndividualAge}+</span>
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="flex items-center gap-1 text-sm font-medium">
-                      <Users className="w-4 h-4 text-gray-400" />
-                      {group._count.registrations} / {group.maxTeams}
+                  <div className="text-right shrink-0 flex items-center gap-3">
+                    <div>
+                      <div className="flex items-center gap-1 text-sm font-medium">
+                        <Users className="w-4 h-4 text-gray-400" />
+                        {group._count.registrations} / {group.maxTeams}
+                      </div>
+                      {group._count.registrations >= group.maxTeams && (
+                        <Badge variant="destructive" className="text-xs mt-1">額滿</Badge>
+                      )}
                     </div>
-                    {group._count.registrations >= group.maxTeams && (
-                      <Badge variant="destructive" className="text-xs mt-1">額滿</Badge>
-                    )}
+                    <button
+                      onClick={() => handleDeleteGroup(group.id, group.name)}
+                      disabled={deletingGroupId === group.id}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-40"
+                      title="刪除組別"
+                    >
+                      {deletingGroupId === group.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Trash2 className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
               </CardContent>

@@ -87,6 +87,24 @@ export async function createEventGroup(data: z.infer<typeof groupSchema>) {
   return { success: true, id: group.id };
 }
 
+export async function deleteEventGroup(groupId: string) {
+  const session = await auth();
+  if (!session?.user || !["ADMIN", "STAFF"].includes(session.user.role)) {
+    return { error: "無權限" };
+  }
+
+  const group = await prisma.eventGroup.findUnique({
+    where: { id: groupId },
+    include: { _count: { select: { registrations: true } } },
+  });
+  if (!group) return { error: "組別不存在" };
+  if (group._count.registrations > 0) return { error: "此組別已有報名資料，無法刪除" };
+
+  await prisma.eventGroup.delete({ where: { id: groupId } });
+  revalidatePath("/admin/events");
+  return { success: true };
+}
+
 export async function getPublicEvents() {
   return prisma.event.findMany({
     where: { isOpen: true },
