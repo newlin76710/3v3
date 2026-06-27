@@ -30,7 +30,14 @@ export async function createEvent(data: z.infer<typeof eventSchema>) {
     const existing = await prisma.event.findUnique({ where: { slug: parsed.data.slug } });
     if (existing) return { error: "此 slug 已存在" };
 
-    const event = await prisma.event.create({ data: parsed.data });
+    const event = await prisma.event.create({
+      data: {
+        ...parsed.data,
+        date: new Date(parsed.data.date),
+        registrationStart: new Date(parsed.data.registrationStart),
+        registrationEnd: new Date(parsed.data.registrationEnd),
+      },
+    });
     revalidatePath("/events");
     revalidatePath("/admin/events");
     return { success: true, id: event.id };
@@ -47,7 +54,11 @@ export async function updateEvent(id: string, data: Partial<z.infer<typeof event
     return { error: "無權限" };
   }
 
-  await prisma.event.update({ where: { id }, data });
+  const dateFields: Partial<{ date: Date; registrationStart: Date; registrationEnd: Date }> = {};
+  if (data.date) dateFields.date = new Date(data.date);
+  if (data.registrationStart) dateFields.registrationStart = new Date(data.registrationStart);
+  if (data.registrationEnd) dateFields.registrationEnd = new Date(data.registrationEnd);
+  await prisma.event.update({ where: { id }, data: { ...data, ...dateFields } });
   revalidatePath("/events");
   revalidatePath("/admin/events");
   return { success: true };
