@@ -164,6 +164,18 @@ ul { list-style: none; }
 }
 .nav-links .fb-link:hover { background: #1458c0; }
 
+.nav-login-btn {
+  background: var(--primary);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.nav-login-btn:hover { opacity: 0.85; }
+
 .hamburger {
   display: none;
   flex-direction: column;

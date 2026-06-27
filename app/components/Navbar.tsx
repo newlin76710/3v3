@@ -78,6 +78,13 @@ export default function Navbar({ base = '' }: NavbarProps) {
           </svg>
           Facebook
         </a>
+        <a
+          href="/login"
+          className="nav-login-btn"
+          onClick={() => setOpen(false)}
+        >
+          會員登入
+        </a>
       </div>
 
       <button className="hamburger" aria-label="選單" onClick={() => setOpen((o) => !o)}>
