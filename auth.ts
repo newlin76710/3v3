@@ -20,6 +20,12 @@ function protectedAdapter(base: Adapter): Adapter {
         if (current.email) delete user.email;
         if (current.image) delete user.image;
       }
+      // 若刪完後沒有任何欄位需要更新，直接回傳現有使用者，避免 Prisma 空 data 錯誤
+      const { id, ...rest } = user;
+      if (Object.keys(rest).length === 0) {
+        const existing = await prisma.user.findUnique({ where: { id } });
+        return existing as AdapterUser;
+      }
       return base.updateUser!(user);
     },
   };
