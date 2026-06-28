@@ -157,6 +157,52 @@ export async function cancelRegistration(registrationId: string): Promise<{ succ
   }
 }
 
+// 取消已付款會員的會籍
+export async function cancelMembership(memberId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+
+    const member = await prisma.member.findUnique({ where: { id: memberId } });
+    if (!member) return { success: false, error: "找不到會員" };
+    if (member.paymentStatus !== "PAID") return { success: false, error: "只能取消已付款的會員" };
+
+    await prisma.member.update({
+      where: { id: memberId },
+      data: { isActive: false, paymentStatus: "CANCELLED" },
+    });
+
+    revalidatePath("/admin/members");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
+}
+
+// 延長已付款會員的會籍（+1年）
+export async function extendMembership(memberId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+
+    const member = await prisma.member.findUnique({ where: { id: memberId } });
+    if (!member) return { success: false, error: "找不到會員" };
+    if (member.paymentStatus !== "PAID") return { success: false, error: "只能延長已付款的會員" };
+
+    const now = new Date();
+    const base = member.expiresAt < now ? now : member.expiresAt;
+    const newExpiry = addYears(base, 1);
+
+    await prisma.member.update({
+      where: { id: memberId },
+      data: { expiresAt: newExpiry, isActive: true },
+    });
+
+    revalidatePath("/admin/members");
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: (e as Error).message };
+  }
+}
+
 // 更新用戶角色
 export async function updateUserRole(userId: string, role: "ADMIN" | "STAFF" | "MEMBER") {
   await requireAdmin();

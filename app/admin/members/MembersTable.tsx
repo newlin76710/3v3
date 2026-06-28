@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { confirmMemberPayment } from "@/app/actions/admin";
+import { confirmMemberPayment, cancelMembership, extendMembership } from "@/app/actions/admin";
 import { formatDate } from "@/lib/utils";
-import { Search, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Search, CheckCircle, Clock, XCircle, CalendarPlus, Ban } from "lucide-react";
 
 type Member = {
   id: string;
@@ -45,6 +45,8 @@ export default function MembersTable({ members, pages, currentPage }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  const [extending, setExtending] = useState<string | null>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +65,36 @@ export default function MembersTable({ members, pages, currentPage }: Props) {
       }
     } finally {
       setConfirming(null);
+    }
+  };
+
+  const handleCancel = async (memberId: string, memberName: string) => {
+    if (!confirm(`確認取消 ${memberName} 的會籍？此操作將停用其會員資格。`)) return;
+    setCancelling(memberId);
+    try {
+      const result = await cancelMembership(memberId);
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success("會籍已取消");
+        router.refresh();
+      }
+    } finally {
+      setCancelling(null);
+    }
+  };
+
+  const handleExtend = async (memberId: string, memberName: string) => {
+    if (!confirm(`確認延長 ${memberName} 的會籍一年？`)) return;
+    setExtending(memberId);
+    try {
+      const result = await extendMembership(memberId);
+      if (result.error) toast.error(result.error);
+      else {
+        toast.success("會籍已延長一年！");
+        router.refresh();
+      }
+    } finally {
+      setExtending(null);
     }
   };
 
@@ -134,16 +166,43 @@ export default function MembersTable({ members, pages, currentPage }: Props) {
                     <TableCell className="text-sm">{formatDate(member.expiresAt)}</TableCell>
                     <TableCell className="text-sm">{formatDate(member.createdAt)}</TableCell>
                     <TableCell>
-                      {member.paymentStatus === "CONFIRMING" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleConfirm(member.id, member.realName)}
-                          disabled={confirming === member.id}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          {confirming === member.id ? "處理中..." : "確認付款"}
-                        </Button>
-                      )}
+                      <div className="flex flex-col gap-1.5">
+                        {member.paymentStatus === "CONFIRMING" && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleConfirm(member.id, member.realName)}
+                            disabled={confirming === member.id}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                            {confirming === member.id ? "處理中..." : "確認付款"}
+                          </Button>
+                        )}
+                        {member.paymentStatus === "PAID" && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleExtend(member.id, member.realName)}
+                              disabled={extending === member.id}
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <CalendarPlus className="w-3.5 h-3.5 mr-1" />
+                              {extending === member.id ? "處理中..." : "延長一年"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCancel(member.id, member.realName)}
+                              disabled={cancelling === member.id}
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                              <Ban className="w-3.5 h-3.5 mr-1" />
+                              {cancelling === member.id ? "處理中..." : "取消會籍"}
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
