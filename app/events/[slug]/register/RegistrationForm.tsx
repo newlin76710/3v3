@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { createRegistration, checkPlayerDuplicates } from "@/app/actions/registration";
+import { createRegistration, checkPlayerDuplicates, checkMemberships } from "@/app/actions/registration";
 import { calculatePlayerFee, formatCurrency } from "@/lib/utils";
 import { differenceInYears } from "date-fns";
 import DateSelectPicker from "@/components/ui/date-select";
@@ -70,6 +70,9 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
   const [players, setPlayers] = useState<PlayerData[]>([emptyPlayer(), emptyPlayer(), emptyPlayer()]);
   const [duplicates, setDuplicates] = useState<DuplicateInfo[]>([null, null, null]);
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+  // key: nationalId, value: isActiveMember（已查詢過才有值）
+  const [membershipCheck, setMembershipCheck] = useState<Record<string, boolean>>({});
+  const [checkingMembership, setCheckingMembership] = useState(false);
   const [validation, setValidation] = useState<string[]>([]);
 
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
@@ -114,6 +117,42 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
     };
   }, [nationalIdKey, event.id]);
 
+  // 即時驗證會員資格：有選手選了「有效會員」且身分證格式正確時，查詢是否為有效會員
+  const memberStatusKey = useMemo(
+    () => players.map((p) => `${p.nationalId}:${p.memberStatus}`).join(","),
+    [players]
+  );
+
+  useEffect(() => {
+    const toCheck = players
+      .filter((p) => p.memberStatus === "ACTIVE_MEMBER" && NATIONAL_ID_RE.test(p.nationalId))
+      .map((p) => p.nationalId);
+
+    if (toCheck.length === 0) return;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setCheckingMembership(true);
+      try {
+        const results = await checkMemberships(toCheck);
+        if (cancelled) return;
+        setMembershipCheck((prev) => {
+          const next = { ...prev };
+          results.forEach(({ nationalId, isActiveMember }) => {
+            next[nationalId] = isActiveMember;
+          });
+          return next;
+        });
+      } finally {
+        if (!cancelled) setCheckingMembership(false);
+      }
+    }, 600);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [memberStatusKey]);
+
   const getPlayerFee = (player: PlayerData, index: number): number =>
     calculatePlayerFee(player.memberStatus, duplicates[index]?.isSecondItem ?? false);
 
@@ -127,6 +166,17 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
 
     const ids = players.map((p) => p.nationalId).filter(Boolean);
     if (new Set(ids).size !== ids.length) errors.push("身分證字號不能重複");
+
+    // 會員資格驗證
+    players.forEach((p, i) => {
+      if (
+        p.memberStatus === "ACTIVE_MEMBER" &&
+        NATIONAL_ID_RE.test(p.nationalId) &&
+        membershipCheck[p.nationalId] === false
+      ) {
+        errors.push(`第 ${i + 1} 位選手（${p.nationalId}）目前非協會有效會員，請確認或選擇其他身分`);
+      }
+    });
 
     if (selectedGroup && players.every((p) => p.birthday)) {
       const ages = players.map((p) => getPlayerAge(p.birthday) ?? 0);
@@ -160,7 +210,7 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
 
   useEffect(() => {
     setValidation(validateAll());
-  }, [players, genderType, teamName, selectedGroupId]);
+  }, [players, genderType, teamName, selectedGroupId, membershipCheck]);
 
   const handleSubmit = async () => {
     const errors = validateAll();
@@ -269,6 +319,10 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
         const age = getPlayerAge(player.birthday);
         const dup = duplicates[index];
         const fee = getPlayerFee(player, index);
+        const memberCheckFailed =
+          player.memberStatus === "ACTIVE_MEMBER" &&
+          NATIONAL_ID_RE.test(player.nationalId) &&
+          membershipCheck[player.nationalId] === false;
 
         return (
           <Card key={index}>
@@ -280,7 +334,7 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
                 <Badge variant={dup?.isSecondItem ? "warning" : "secondary"} className="text-xs">
                   {formatCurrency(fee)}
                 </Badge>
-                {checkingDuplicates && NATIONAL_ID_RE.test(player.nationalId) && (
+                {(checkingDuplicates || checkingMembership) && NATIONAL_ID_RE.test(player.nationalId) && (
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" />
                 )}
               </CardTitle>
@@ -368,6 +422,13 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
                       <SelectItem value="NON_MEMBER">非會員（NT$ 450）</SelectItem>
                     </SelectContent>
                   </Select>
+                  {/* 會員資格驗證警告 */}
+                  {memberCheckFailed && (
+                    <div className="mt-2 flex items-start gap-2 p-2.5 bg-red-50 border border-red-300 rounded-lg text-sm text-red-700">
+                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <p>此身分證目前非協會有效會員，請確認會籍狀態或改選其他身分</p>
+                    </div>
+                  )}
                   {dup?.isSecondItem && (
                     <p className="text-xs text-gray-400 mt-1">
                       ＊第2項費用已依上方規則調整，無需另行選擇
@@ -447,10 +508,13 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
             </Alert>
           )}
 
-          <Button onClick={handleSubmit} disabled={loading || validation.length > 0 || checkingDuplicates}
-            className="w-full h-12 text-base">
+          <Button
+            onClick={handleSubmit}
+            disabled={loading || validation.length > 0 || checkingDuplicates || checkingMembership}
+            className="w-full h-12 text-base"
+          >
             {loading ? <Loader2 className="animate-spin mr-2" /> : null}
-            {loading ? "送出中..." : checkingDuplicates ? "檢查中..." : "確認報名並前往匯款"}
+            {loading ? "送出中..." : (checkingDuplicates || checkingMembership) ? "檢查中..." : "確認報名並前往匯款"}
           </Button>
         </CardContent>
       </Card>

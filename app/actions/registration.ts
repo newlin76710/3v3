@@ -260,6 +260,25 @@ export async function submitRegistrationPayment(data: z.infer<typeof paymentConf
   return { success: true };
 }
 
+// 查詢身分證是否為協會有效會員
+export async function checkMemberships(
+  nationalIds: string[]
+): Promise<{ nationalId: string; isActiveMember: boolean }[]> {
+  const valid = nationalIds.filter((id) => /^[A-Z][12]\d{8}$/.test(id));
+  if (valid.length === 0) return [];
+
+  const now = new Date();
+  const members = await prisma.member.findMany({
+    where: { nationalId: { in: valid }, isActive: true, expiresAt: { gt: now } },
+    select: { nationalId: true },
+  });
+
+  return valid.map((id) => ({
+    nationalId: id,
+    isActiveMember: members.some((m) => m.nationalId === id),
+  }));
+}
+
 // 提交前預查：哪些身分證在本賽事已有報名（回傳第2項資訊）
 export async function checkPlayerDuplicates(
   nationalIds: string[],
