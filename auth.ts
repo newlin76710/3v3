@@ -1,12 +1,32 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { Adapter, AdapterUser } from "@auth/core/adapters";
 import Google from "next-auth/providers/google";
 import Facebook from "next-auth/providers/facebook";
 import LINE from "next-auth/providers/line";
 import { prisma } from "@/lib/prisma";
 
+// 包裝 adapter，updateUser 時不覆蓋使用者已設定的 name / email / image
+function protectedAdapter(base: Adapter): Adapter {
+  return {
+    ...base,
+    async updateUser(user: Partial<AdapterUser> & Pick<AdapterUser, "id">) {
+      const current = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { name: true, email: true, image: true },
+      });
+      if (current) {
+        if (current.name)  delete user.name;
+        if (current.email) delete user.email;
+        if (current.image) delete user.image;
+      }
+      return base.updateUser!(user);
+    },
+  };
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: protectedAdapter(PrismaAdapter(prisma)),
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -28,6 +48,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login",
   },
   callbacks: {
+    // 補填空白的 email（首次登入若 provider 未回傳、或第二次才授權）
+    async signIn({ user, account, profile }) {
+      if (profile?.email && user.id && !user.email) {
+        try {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { email: profile.email as string },
+          });
+        } catch {
+          // email 已被其他帳號使用，略過
+        }
+      }
+      return true;
+    },
     async session({ session, user }) {
       if (session.user) {
         session.user.id = user.id;

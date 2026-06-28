@@ -44,6 +44,9 @@ export default function JoinMemberForm() {
       const result = await registerMember(data);
       if (result.error) {
         toast.error(result.error);
+      } else if (result.linked && result.paymentStatus && ["PAID", "CONFIRMING"].includes(result.paymentStatus)) {
+        toast.success(`帳號已連結！會員編號：${result.memberNumber}`);
+        router.push("/member");
       } else {
         toast.success(`申請成功！會員編號：${result.memberNumber}`);
         router.push("/member/payment?type=membership");

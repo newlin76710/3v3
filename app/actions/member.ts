@@ -6,6 +6,30 @@ import { revalidatePath } from "next/cache";
 import { addYears } from "date-fns";
 import { generateMemberNumber, MEMBERSHIP_DURATION_YEARS, BANK_INFO } from "@/lib/utils";
 
+export async function updateUserInfo(data: { name?: string; phone?: string }) {
+  const session = await auth();
+  if (!session?.user?.id) return { error: "請先登入" };
+
+  const schema = z.object({
+    name: z.string().min(1, "請輸入名稱").optional(),
+    phone: z.string().regex(/^09\d{8}$/, "請輸入有效的手機號碼").optional().or(z.literal("")),
+  });
+
+  const parsed = schema.safeParse(data);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: {
+      name: parsed.data.name,
+      phone: parsed.data.phone || null,
+    },
+  });
+
+  revalidatePath("/member");
+  return { success: true };
+}
+
 const memberSchema = z.object({
   realName: z.string().min(2, "姓名至少2個字"),
   nationalId: z
@@ -41,7 +65,7 @@ export async function registerMember(data: MemberFormData) {
       data: { userId: session.user.id },
     });
     revalidatePath("/member");
-    return { success: true, memberNumber: orphaned.memberNumber, linked: true };
+    return { success: true, memberNumber: orphaned.memberNumber, linked: true, paymentStatus: orphaned.paymentStatus };
   }
 
   const memberNumber = generateMemberNumber();

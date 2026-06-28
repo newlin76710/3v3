@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import DateSelectPicker from "@/components/ui/date-select";
-import { updateMemberProfile } from "@/app/actions/member";
+import { updateMemberProfile, updateUserInfo } from "@/app/actions/member";
 import type { UpdateProfileData } from "@/app/actions/member";
 import {
   User, CreditCard, Trophy, LogOut, Plus, AlertCircle, Clock, Settings, Pencil, X, Info,
@@ -66,7 +66,7 @@ type Registration = {
 };
 
 interface Props {
-  user: { name?: string | null; email?: string | null; image?: string | null; role?: string };
+  user: { name?: string | null; email?: string | null; image?: string | null; role?: string; phone?: string | null };
   member: Member | null;
   registrations: Registration[];
 }
@@ -98,6 +98,7 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [userEditForm, setUserEditForm] = useState({ name: user.name ?? "", phone: user.phone ?? "" });
   const [editForm, setEditForm] = useState<UpdateProfileData>({
     realName: member?.realName ?? "",
     birthday: toDateStr(member?.birthday),
@@ -111,6 +112,15 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
   const handleSaveProfile = async () => {
     setSaving(true);
     const result = await updateMemberProfile(editForm);
+    setSaving(false);
+    if (result.error) { toast.error(result.error); return; }
+    toast.success("資料已更新");
+    setEditing(false);
+  };
+
+  const handleSaveUserInfo = async () => {
+    setSaving(true);
+    const result = await updateUserInfo(userEditForm);
     setSaving(false);
     if (result.error) { toast.error(result.error); return; }
     toast.success("資料已更新");
@@ -269,14 +279,17 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
           <Card className="mb-8 border-dashed border-2">
             <CardContent className="py-12 text-center">
               <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">尚未申請協會會員</h2>
+              <h2 className="text-xl font-semibold text-gray-700 mb-2">尚未連結協會會員資料</h2>
               <p className="text-gray-500 mb-6">繳交年費 NT$ 500 成為協會會員，享有報名優惠及更多會員專屬服務。</p>
               <Link href="/member/join">
                 <Button size="lg" className="gap-2">
                   <Plus className="w-4 h-4" />
-                  立即申請入會
+                  申請入會 / 連結現有會籍
                 </Button>
               </Link>
+              <p className="text-xs text-gray-400 mt-4">
+                曾透過賽事報名加入的會員，請點上方按鈕並填寫身分證字號即可連結帳號
+              </p>
             </CardContent>
           </Card>
         )}
@@ -400,7 +413,7 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>個人資料</CardTitle>
-                  {member && !editing && (
+                  {!editing && (
                     <Button variant="outline" size="sm" onClick={() => setEditing(true)} className="gap-1">
                       <Pencil className="w-3.5 h-3.5" />
                       編輯
@@ -422,6 +435,31 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                     <p className="text-gray-500 text-sm">{user.email}</p>
                   </div>
                 </div>
+
+                {!member && editing && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div>
+                      <Label>顯示名稱</Label>
+                      <Input
+                        value={userEditForm.name}
+                        onChange={(e) => setUserEditForm((f) => ({ ...f, name: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label>手機號碼</Label>
+                      <Input
+                        value={userEditForm.phone}
+                        onChange={(e) => setUserEditForm((f) => ({ ...f, phone: e.target.value }))}
+                        placeholder="09xxxxxxxx"
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button onClick={handleSaveUserInfo} disabled={saving} className="w-full">
+                      {saving ? "儲存中..." : "儲存變更"}
+                    </Button>
+                  </div>
+                )}
 
                 {member && !editing && (
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
