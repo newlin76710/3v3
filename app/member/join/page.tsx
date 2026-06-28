@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getMemberData } from "@/app/actions/member";
+import { prisma } from "@/lib/prisma";
 import { BANK_INFO } from "@/lib/utils";
 import JoinMemberForm from "./JoinMemberForm";
 
@@ -10,8 +11,20 @@ export default async function JoinPage() {
   const session = await auth();
   if (!session) redirect("/login?callbackUrl=/member/join");
 
-  const existing = await getMemberData();
+  const [existing, userProfile] = await Promise.all([
+    getMemberData(),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { realName: true, nationalId: true, birthday: true, gender: true, phone: true, address: true },
+    }),
+  ]);
   if (existing) redirect("/member");
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const toDateStr = (d: Date | null | undefined) => {
+    if (!d) return undefined;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -36,7 +49,14 @@ export default async function JoinPage() {
             </div>
           </div>
 
-          <JoinMemberForm />
+          <JoinMemberForm defaultValues={{
+            realName:   userProfile?.realName   ?? undefined,
+            nationalId: userProfile?.nationalId ?? undefined,
+            birthday:   toDateStr(userProfile?.birthday),
+            gender:     (userProfile?.gender as "MALE" | "FEMALE") ?? undefined,
+            phone:      userProfile?.phone      ?? undefined,
+            address:    userProfile?.address    ?? undefined,
+          }} />
         </div>
       </div>
     </div>

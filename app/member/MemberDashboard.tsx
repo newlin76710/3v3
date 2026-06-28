@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
@@ -66,7 +67,19 @@ type Registration = {
 };
 
 interface Props {
-  user: { name?: string | null; email?: string | null; image?: string | null; role?: string; phone?: string | null };
+  user: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    role?: string;
+    phone?: string | null;
+    realName?: string | null;
+    nationalId?: string | null;
+    birthday?: Date | null;
+    gender?: string | null;
+    address?: string | null;
+    nationalIdLockedAt?: Date | null;
+  };
   member: Member | null;
   registrations: Registration[];
 }
@@ -96,9 +109,19 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
   const isActiveMember = member?.isActive && !isExpired;
   const isAdmin = user.role === "ADMIN" || user.role === "STAFF";
 
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [userEditForm, setUserEditForm] = useState({ name: user.name ?? "", phone: user.phone ?? "" });
+  const [userEditForm, setUserEditForm] = useState({
+    name:       user.name       ?? "",
+    phone:      user.phone      ?? "",
+    realName:   user.realName   ?? "",
+    nationalId: user.nationalId ?? "",
+    birthday:   toDateStr(user.birthday),
+    gender:     (user.gender as "MALE" | "FEMALE") ?? "MALE",
+    address:    user.address    ?? "",
+    email:      user.email      ?? "",
+  });
   const [editForm, setEditForm] = useState<UpdateProfileData>({
     realName: member?.realName ?? "",
     birthday: toDateStr(member?.birthday),
@@ -123,8 +146,10 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
     const result = await updateUserInfo(userEditForm);
     setSaving(false);
     if (result.error) { toast.error(result.error); return; }
-    toast.success("資料已更新");
+    if (result.autoLinked) toast.success("已自動連結現有會籍！");
+    else toast.success("資料已更新");
     setEditing(false);
+    router.refresh();
   };
 
   // 若某筆報名裡本人是 NEW_MEMBER 第一項（700含入會費），則不重複顯示 MEMBERSHIP_FEE
@@ -436,25 +461,99 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                   </div>
                 </div>
 
+                {!member && !editing && (user.realName || user.nationalId || user.phone || user.birthday) && (
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                    {user.realName && (
+                      <div><p className="text-xs text-gray-400">真實姓名</p><p className="font-medium">{user.realName}</p></div>
+                    )}
+                    {user.nationalId && (
+                      <div><p className="text-xs text-gray-400">身分證字號</p><p className="font-medium">{user.nationalId.slice(0, 3)}****{user.nationalId.slice(-2)}</p></div>
+                    )}
+                    {user.gender && (
+                      <div><p className="text-xs text-gray-400">性別</p><p className="font-medium">{user.gender === "MALE" ? "男" : "女"}</p></div>
+                    )}
+                    {user.birthday && (
+                      <div><p className="text-xs text-gray-400">出生日期</p><p className="font-medium">{formatDate(user.birthday)}</p></div>
+                    )}
+                    {user.phone && (
+                      <div><p className="text-xs text-gray-400">手機號碼</p><p className="font-medium">{user.phone}</p></div>
+                    )}
+                    {user.address && (
+                      <div className="col-span-2"><p className="text-xs text-gray-400">地址</p><p className="font-medium">{user.address}</p></div>
+                    )}
+                  </div>
+                )}
+
                 {!member && editing && (
                   <div className="space-y-4 pt-4 border-t">
-                    <div>
-                      <Label>顯示名稱</Label>
-                      <Input
-                        value={userEditForm.name}
-                        onChange={(e) => setUserEditForm((f) => ({ ...f, name: e.target.value }))}
-                        className="mt-1"
-                      />
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label>顯示名稱</Label>
+                        <Input value={userEditForm.name} onChange={(e) => setUserEditForm((f) => ({ ...f, name: e.target.value }))} className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>真實姓名</Label>
+                        <Input value={userEditForm.realName} onChange={(e) => setUserEditForm((f) => ({ ...f, realName: e.target.value }))} className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>性別</Label>
+                        <Select value={userEditForm.gender} onValueChange={(v) => setUserEditForm((f) => ({ ...f, gender: v as "MALE" | "FEMALE" }))}>
+                          <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="MALE">男</SelectItem>
+                            <SelectItem value="FEMALE">女</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>手機號碼</Label>
+                        <Input value={userEditForm.phone} onChange={(e) => setUserEditForm((f) => ({ ...f, phone: e.target.value }))} placeholder="09xxxxxxxx" className="mt-1" />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <Label>出生日期</Label>
+                        <DateSelectPicker value={userEditForm.birthday} onChange={(v) => setUserEditForm((f) => ({ ...f, birthday: v }))} maxYear={new Date().getFullYear()} className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>聯絡信箱（選填）</Label>
+                        <Input type="email" value={userEditForm.email} onChange={(e) => setUserEditForm((f) => ({ ...f, email: e.target.value }))} placeholder="your@email.com" className="mt-1" />
+                      </div>
+                      <div>
+                        <Label>地址（選填）</Label>
+                        <Input value={userEditForm.address} onChange={(e) => setUserEditForm((f) => ({ ...f, address: e.target.value }))} className="mt-1" />
+                      </div>
                     </div>
-                    <div>
-                      <Label>手機號碼</Label>
-                      <Input
-                        value={userEditForm.phone}
-                        onChange={(e) => setUserEditForm((f) => ({ ...f, phone: e.target.value }))}
-                        placeholder="09xxxxxxxx"
-                        className="mt-1"
-                      />
+
+                    <div className="border rounded-lg p-4 bg-gray-50">
+                      <Label className="flex items-center gap-1.5 mb-2">
+                        身分證字號
+                        {user.nationalIdLockedAt
+                          ? <Badge variant="secondary" className="text-xs">已鎖定</Badge>
+                          : user.nationalId
+                            ? <Badge variant="warning" className="text-xs">只能改一次</Badge>
+                            : null}
+                      </Label>
+                      {user.nationalIdLockedAt ? (
+                        <div>
+                          <p className="text-sm font-medium">{userEditForm.nationalId}</p>
+                          <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <Info className="w-3 h-3" />如需修改，請寄信至 {process.env.NEXT_PUBLIC_FROM_EMAIL ?? "info@weekielife.com"} 聯絡官方
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <Input
+                            value={userEditForm.nationalId}
+                            onChange={(e) => setUserEditForm((f) => ({ ...f, nationalId: e.target.value.toUpperCase() }))}
+                            placeholder="例：A123456789"
+                            maxLength={10}
+                            className="mt-1"
+                          />
+                          {user.nationalId && <p className="text-xs text-amber-600 mt-1">⚠ 修改後無法再次更改</p>}
+                          <p className="text-xs text-blue-600 mt-1">若身分證字號與現有會籍相符，將自動連結帳號</p>
+                        </div>
+                      )}
                     </div>
+
                     <Button onClick={handleSaveUserInfo} disabled={saving} className="w-full">
                       {saving ? "儲存中..." : "儲存變更"}
                     </Button>
@@ -578,7 +677,7 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                           <p className="text-sm font-medium">{editForm.nationalId}</p>
                           <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                             <Info className="w-3 h-3" />
-                            如需修改，請寄信至 info@weekielife.com 聯絡官方
+                            如需修改，請寄信至 {process.env.NEXT_PUBLIC_FROM_EMAIL ?? "info@weekielife.com"} 聯絡官方
                           </p>
                         </div>
                       ) : (

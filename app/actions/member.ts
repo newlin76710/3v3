@@ -6,28 +6,94 @@ import { revalidatePath } from "next/cache";
 import { addYears } from "date-fns";
 import { generateMemberNumber, MEMBERSHIP_DURATION_YEARS, BANK_INFO } from "@/lib/utils";
 
-export async function updateUserInfo(data: { name?: string; phone?: string }) {
+export async function updateUserInfo(data: {
+  name?: string;
+  phone?: string;
+  realName?: string;
+  nationalId?: string;
+  birthday?: string;
+  gender?: string;
+  address?: string;
+  email?: string;
+}) {
   const session = await auth();
   if (!session?.user?.id) return { error: "請先登入" };
 
-  const schema = z.object({
-    name: z.string().min(1, "請輸入名稱").optional(),
-    phone: z.string().regex(/^09\d{8}$/, "請輸入有效的手機號碼").optional().or(z.literal("")),
-  });
-
-  const parsed = schema.safeParse(data);
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-
-  await prisma.user.update({
+  const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    data: {
-      name: parsed.data.name,
-      phone: parsed.data.phone || null,
-    },
+    select: { nationalId: true, nationalIdLockedAt: true },
   });
+  if (!currentUser) return { error: "找不到用戶" };
+
+  // 身分證驗證
+  if (data.nationalId && !/^[A-Z][12]\d{8}$/.test(data.nationalId)) {
+    return { error: "請輸入有效的身分證字號（如：A123456789）" };
+  }
+
+  // 身分證鎖定檢查：從現有值改為不同值才算「改過」
+  const isChangingNationalId =
+    !!data.nationalId &&
+    !!currentUser.nationalId &&
+    data.nationalId !== currentUser.nationalId;
+
+  if (isChangingNationalId) {
+    if (currentUser.nationalIdLockedAt) {
+      return { error: `身分證字號只能修改一次，如需修改請寄信至 ${process.env.NEXT_PUBLIC_FROM_EMAIL ?? "官方信箱"} 聯絡官方` };
+    }
+    // 也檢查已連結的 Member 是否曾修改過身分證
+    const linkedMemberRecord = await prisma.member.findUnique({
+      where: { userId: session.user.id },
+      select: { nationalIdChangedAt: true },
+    });
+    if (linkedMemberRecord?.nationalIdChangedAt) {
+      return { error: `身分證字號只能修改一次，如需修改請寄信至 ${process.env.NEXT_PUBLIC_FROM_EMAIL ?? "官方信箱"} 聯絡官方` };
+    }
+  }
+
+  const updateData: Record<string, unknown> = {};
+  if (data.name !== undefined)     updateData.name     = data.name || null;
+  if (data.phone !== undefined)    updateData.phone    = data.phone || null;
+  if (data.realName !== undefined) updateData.realName = data.realName || null;
+  if (data.gender !== undefined)   updateData.gender   = data.gender || null;
+  if (data.address !== undefined)  updateData.address  = data.address || null;
+  if (data.birthday !== undefined) updateData.birthday = data.birthday ? new Date(data.birthday) : null;
+
+  if (data.email !== undefined) {
+    const emailVal = data.email || null;
+    if (emailVal) {
+      const taken = await prisma.user.findFirst({
+        where: { email: emailVal, NOT: { id: session.user.id } },
+      });
+      if (taken) return { error: "此電子信箱已被其他帳號使用" };
+    }
+    updateData.email = emailVal;
+  }
+
+  let autoLinked = false;
+  if (data.nationalId) {
+    updateData.nationalId = data.nationalId;
+    if (isChangingNationalId) updateData.nationalIdLockedAt = new Date();
+
+    // 身分證字號與孤立 Member 相符 → 自動連結
+    const orphaned = await prisma.member.findUnique({ where: { nationalId: data.nationalId } });
+    if (orphaned && !orphaned.userId) {
+      await prisma.member.update({
+        where: { id: orphaned.id },
+        data: { userId: session.user.id },
+      });
+      autoLinked = true;
+    }
+  }
+
+  try {
+    await prisma.user.update({ where: { id: session.user.id }, data: updateData });
+  } catch (e: unknown) {
+    if ((e as { code?: string }).code === "P2002") return { error: "此身分證字號已被其他帳號使用" };
+    return { error: (e as Error).message };
+  }
 
   revalidatePath("/member");
-  return { success: true };
+  return { success: true, autoLinked };
 }
 
 const memberSchema = z.object({
@@ -59,7 +125,13 @@ export async function registerMember(data: MemberFormData) {
   // 若孤立 Member 已存在（由報名流程建立），直接關聯
   const orphaned = await prisma.member.findUnique({ where: { nationalId } });
   if (orphaned) {
-    if (orphaned.userId) return { error: "此身分證字號已註冊為會員" };
+    if (orphaned.userId) {
+      if (orphaned.userId === session.user.id) {
+        // 已連結到自己，不需再操作
+        return { success: true, memberNumber: orphaned.memberNumber, linked: true, paymentStatus: orphaned.paymentStatus };
+      }
+      return { error: "此身分證字號已被其他帳號使用" };
+    }
     await prisma.member.update({
       where: { id: orphaned.id },
       data: { userId: session.user.id },
@@ -224,7 +296,15 @@ export async function updateMemberProfile(data: UpdateProfileData) {
 
   if (newNationalId) {
     if (member.nationalIdChangedAt) {
-      return { error: "身分證字號只能修改一次，如需修改請寄信至 info@weekielife.com 聯絡官方" };
+      return { error: `身分證字號只能修改一次，如需修改請寄信至 ${process.env.NEXT_PUBLIC_FROM_EMAIL ?? "官方信箱"} 聯絡官方` };
+    }
+    // 也檢查 User 層級的身分證鎖定（在個人資料頁改過）
+    const userRecord = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { nationalIdLockedAt: true },
+    });
+    if (userRecord?.nationalIdLockedAt) {
+      return { error: `身分證字號只能修改一次，如需修改請寄信至 ${process.env.NEXT_PUBLIC_FROM_EMAIL ?? "官方信箱"} 聯絡官方` };
     }
     const taken = await prisma.member.findUnique({ where: { nationalId: newNationalId } });
     if (taken) {

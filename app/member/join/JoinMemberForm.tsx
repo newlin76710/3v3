@@ -24,7 +24,11 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export default function JoinMemberForm() {
+interface Props {
+  defaultValues?: Partial<FormData>;
+}
+
+export default function JoinMemberForm({ defaultValues }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +38,7 @@ export default function JoinMemberForm() {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues });
 
   const birthday = watch("birthday");
 
