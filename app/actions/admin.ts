@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { addYears } from "date-fns";
+import { MEMBERSHIP_PROMO_EXPIRY } from "@/lib/utils";
 
 async function requireAdmin() {
   const session = await auth();
@@ -21,16 +22,13 @@ export async function confirmMemberPayment(memberId: string): Promise<{ success:
     if (!member) return { success: false, error: "找不到會員" };
 
     const now = new Date();
-    // 如果已過期，從今天起算一年；否則從原到期日起算
-    const currentExpiry = member.expiresAt < now ? now : member.expiresAt;
-    const newExpiry = addYears(currentExpiry, 1);
 
     await prisma.member.update({
       where: { id: memberId },
       data: {
         isActive: true,
         paymentStatus: "PAID",
-        expiresAt: newExpiry,
+        expiresAt: MEMBERSHIP_PROMO_EXPIRY,
         confirmedAt: now,
       },
     });
@@ -79,13 +77,12 @@ export async function confirmRegistrationPayment(registrationId: string): Promis
     for (const nationalId of newMemberIds) {
       const member = await prisma.member.findUnique({ where: { nationalId } });
       if (member && !member.isActive) {
-        const currentExpiry = member.expiresAt < now ? now : member.expiresAt;
         await prisma.member.update({
           where: { id: member.id },
           data: {
             isActive: true,
             paymentStatus: "PAID",
-            expiresAt: addYears(currentExpiry, 1),
+            expiresAt: MEMBERSHIP_PROMO_EXPIRY,
             confirmedAt: now,
           },
         });

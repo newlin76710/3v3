@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { addYears } from "date-fns";
-import { generateMemberNumber, MEMBERSHIP_DURATION_YEARS, BANK_INFO } from "@/lib/utils";
+import { generateMemberNumber, MEMBERSHIP_PROMO_EXPIRY, BANK_INFO } from "@/lib/utils";
 
 export async function updateUserInfo(data: {
   name?: string;
@@ -141,7 +141,7 @@ export async function registerMember(data: MemberFormData) {
   }
 
   const memberNumber = generateMemberNumber();
-  const expiresAt = addYears(new Date(), MEMBERSHIP_DURATION_YEARS);
+  const expiresAt = MEMBERSHIP_PROMO_EXPIRY;
 
   const member = await prisma.member.create({
     data: {
@@ -353,7 +353,7 @@ export async function updateMemberProfile(data: UpdateProfileData) {
               paymentStatus: "PAID",
               isActive: true,
               confirmedAt: new Date(),
-              expiresAt: addYears(new Date(), 1),
+              expiresAt: MEMBERSHIP_PROMO_EXPIRY,
             },
           });
         } else if (statuses.includes("CONFIRMING")) {

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { differenceInYears, addYears } from "date-fns";
+import { MEMBERSHIP_PROMO_EXPIRY } from "@/lib/utils";
 import { calculatePlayerFee, generateMemberNumber, BANK_INFO } from "@/lib/utils";
 
 const playerSchema = z.object({
@@ -188,7 +189,7 @@ export async function createRegistration(data: RegistrationFormData) {
           gender: player.gender,
           phone: player.phone,
           email: player.email || null,
-          expiresAt: addYears(new Date(), 1),
+          expiresAt: MEMBERSHIP_PROMO_EXPIRY,
           isActive: false,
           paymentStatus: "PENDING",
         },
