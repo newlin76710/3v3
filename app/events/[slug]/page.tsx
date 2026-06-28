@@ -133,7 +133,13 @@ export default async function EventDetailPage({ params }: Props) {
                       </div>
                     </div>
                     {!isFull && isRegistrationOpen && (
-                      <Link href={`/events/${event.slug}/register?group=${group.id}`}>
+                      <Link
+                        href={
+                          session
+                            ? `/events/${event.slug}/register?group=${group.id}`
+                            : `/login?callbackUrl=${encodeURIComponent(`/events/${event.slug}/register?group=${group.id}`)}`
+                        }
+                      >
                         <Button size="sm">報名此組</Button>
                       </Link>
                     )}

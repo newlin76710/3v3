@@ -113,7 +113,14 @@ export default async function EventsPage() {
                       <span>報名截止：{formatDate(event.registrationEnd)}</span>
                     </div>
 
-                    <Link href={`/events/${event.slug}`} className="block">
+                    <Link
+                      href={
+                        isRegistrationOpen && !session
+                          ? `/login?callbackUrl=/events/${event.slug}`
+                          : `/events/${event.slug}`
+                      }
+                      className="block"
+                    >
                       <Button className="w-full" variant={isRegistrationOpen ? "default" : "outline"}>
                         {isRegistrationOpen ? "立即報名" : "查看詳情"}
                       </Button>
