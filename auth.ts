@@ -46,6 +46,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.LINE_CLIENT_ID!,
       clientSecret: process.env.LINE_CLIENT_SECRET!,
       authorization: { params: { scope: "profile openid email" } },
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email ?? null,
+          image: profile.picture,
+        };
+      },
     }),
   ],
   session: { strategy: "database" },
