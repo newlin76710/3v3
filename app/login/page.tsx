@@ -9,10 +9,8 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
-  const session = await auth();
-  if (session) redirect("/member");
-
-  const params = await searchParams;
+  const [session, params] = await Promise.all([auth(), searchParams]);
+  if (session) redirect(params.callbackUrl?.startsWith("/") ? params.callbackUrl : "/member");
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">

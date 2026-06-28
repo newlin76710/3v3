@@ -115,8 +115,8 @@ export default async function EventsPage() {
 
                     <Link
                       href={
-                        isRegistrationOpen && !session
-                          ? `/login?callbackUrl=/events/${event.slug}`
+                        !session
+                          ? `/login?callbackUrl=/events`
                           : `/events/${event.slug}`
                       }
                       className="block"

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Navbar from '../../components/Navbar';
-import RegisterForm from './RegisterForm';
 
 export const metadata: Metadata = {
   title: '第一屆中華盃全國羽球3對3錦標賽 — 線上報名 | 中華台北羽球3對3發展協會',
@@ -97,15 +96,13 @@ export default function ChineseCupPage() {
                 </div>
               </div>
             </div>
-            <a href="#ev-register" className="btn-primary ev-register-btn">立即線上報名 →</a>
+            <a href="/login?callbackUrl=/events" className="btn-primary ev-register-btn">立即線上報名 →</a>
           </div>
           <div className="ev-hero-img">
-            <a href="#ev-register" className="ev-hero-img-link">
-              <img
-                src="/images/33比賽.jpg"
-                alt="第一屆中華盃全國羽球3對3錦標賽"
-              />
-            </a>
+            <img
+              src="/images/33比賽.jpg"
+              alt="第一屆中華盃全國羽球3對3錦標賽"
+            />
           </div>
         </div>
       </section>
@@ -161,19 +158,6 @@ export default function ChineseCupPage() {
             </table>
           </div>
           <p className="ev-note">※ 分組資格以報名當日為基準，主辦單位保留最終解釋權。</p>
-        </div>
-      </section>
-
-      {/* REGISTER */}
-      <section id="ev-register">
-        <div className="ev-section-inner">
-          <span className="section-label ev-reg-label">Sign Up</span>
-          <h2 className="section-title ev-reg-title">線上報名</h2>
-          <div className="section-divider ev-reg-divider" />
-          <p className="section-desc ev-reg-desc">
-            填寫以下報名表，我們收到後將於 3 個工作天內與您聯繫確認報名資訊。
-          </p>
-          <RegisterForm />
         </div>
       </section>
 

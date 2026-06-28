@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 const FB_URL = "https://www.facebook.com/share/16w8aQX2dy/";
 
@@ -18,6 +19,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ base = "" }: NavbarProps) {
+  const { data: session } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("");
@@ -49,7 +51,7 @@ export default function Navbar({ base = "" }: NavbarProps) {
           🏸 <strong>第一屆中華盃全國羽球3對3錦標賽</strong> —
           報名截止：2026.11.15
         </span>
-        <a href="/events/chinese-cup">立即報名 →</a>
+        <a href="/login?callbackUrl=/events">立即報名 →</a>
       </div>
       <nav id="navbar" className={scrolled ? "scrolled" : ""}>
         <a href={base + "#hero"} className="nav-brand">
@@ -86,11 +88,11 @@ export default function Navbar({ base = "" }: NavbarProps) {
             </a>
           ))}
           <a
-            href="/login"
+            href={session ? "/member" : "/login"}
             className="nav-login-btn"
             onClick={() => setOpen(false)}
           >
-            會員登入
+            {session ? "會員中心" : "會員登入"}
           </a>
         </div>
 

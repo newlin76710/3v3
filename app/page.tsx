@@ -107,7 +107,7 @@ export default function Home() {
               <div className="promo-meta-item"><span>🏸</span><div><div className="promo-meta-label">組別</div><div className="promo-meta-val">A / B / C / D 四組</div></div></div>
             </div>
             <div className="promo-actions">
-              <Link href="/events/chinese-cup" className="promo-btn">立即線上報名 →</Link>
+              <Link href="/login?callbackUrl=/events" className="promo-btn">立即線上報名 →</Link>
               <div className="qr-download-wrap">
                 <QRCodeDisplay />
                 <a href="/qrcode-register.png" download="報名QRCode.png" className="qr-download-btn">
@@ -231,7 +231,7 @@ export default function Home() {
             </a>
           </div>
 
-          <Link href="/events/chinese-cup" className="event-card-link">
+          <Link href="/login?callbackUrl=/events" className="event-card-link">
             <div className="event-card">
               <div className="event-img">
                 <img src="/images/33比賽.jpg" alt="第一屆中華盃全國羽球3對3錦標賽" width={240} height={200} />
