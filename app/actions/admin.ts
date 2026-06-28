@@ -117,6 +117,11 @@ export async function cancelRegistration(registrationId: string): Promise<{ succ
       data: { paymentStatus: "CANCELLED" },
     });
 
+    await prisma.payment.updateMany({
+      where: { registrationId, status: "PAID" },
+      data: { status: "CANCELLED" },
+    });
+
     // 對每個新入會選手，確認沒有其他有效報名後停用其 Member 記錄
     const newMemberPlayers = registration.players.filter((p) => p.memberStatus === "NEW_MEMBER");
     for (const player of newMemberPlayers) {
@@ -150,6 +155,7 @@ export async function cancelRegistration(registrationId: string): Promise<{ succ
 
     revalidatePath("/admin/registrations");
     revalidatePath("/admin/members");
+    revalidatePath("/admin");
     revalidatePath("/member");
     return { success: true };
   } catch (e) {
@@ -171,7 +177,13 @@ export async function cancelMembership(memberId: string): Promise<{ success: boo
       data: { isActive: false, paymentStatus: "CANCELLED" },
     });
 
+    await prisma.payment.updateMany({
+      where: { memberId, status: "PAID" },
+      data: { status: "CANCELLED" },
+    });
+
     revalidatePath("/admin/members");
+    revalidatePath("/admin");
     return { success: true };
   } catch (e) {
     return { success: false, error: (e as Error).message };

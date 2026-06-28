@@ -60,10 +60,10 @@ export function validateNationalId(id: string): boolean {
 }
 
 export const BANK_INFO = {
-  bankName: "中國信託",
-  bankCode: "822",
-  accountNumber: "178540107748",
-  accountName: "林成翰",
+  bankName: "玉山銀行",
+  bankCode: "808",
+  accountNumber: "0118940162320",
+  accountName: "社團法人中華台北羽球3對3發展協會",
 };
 
 export const MEMBERSHIP_FEE = 500;
