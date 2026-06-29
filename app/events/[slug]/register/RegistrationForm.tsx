@@ -54,7 +54,7 @@ const memberStatusLabel: Record<string, string> = {
 };
 
 interface Props {
-  event: { id: string; name: string; slug: string };
+  event: { id: string; name: string; slug: string; date: Date | string };
   groups: EventGroup[];
   defaultGroupId: string;
   memberData: { id: string; isActive: boolean; expiresAt: Date; nationalId: string; realName: string } | null;
@@ -77,9 +77,11 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
 
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
 
+  const eventDate = new Date(event.date);
+
   const getPlayerAge = (birthday: string): number | null => {
     if (!birthday) return null;
-    return differenceInYears(new Date(), new Date(birthday));
+    return differenceInYears(eventDate, new Date(birthday));
   };
 
   // 即時查重：身分證填完後自動查

@@ -79,8 +79,8 @@ export async function createRegistration(data: RegistrationFormData) {
     return { error: "混3P必須2男1女或1男2女" };
   }
 
-  // 計算年齡並驗證
-  const ages = players.map((p) => differenceInYears(new Date(), new Date(p.birthday)));
+  // 計算年齡並驗證（以比賽日期為準）
+  const ages = players.map((p) => differenceInYears(event.date, new Date(p.birthday)));
   const totalAge = ages.reduce((a, b) => a + b, 0);
   const minAge = Math.min(...ages);
 
