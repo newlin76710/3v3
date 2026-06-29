@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { confirmRegistrationPayment, cancelRegistration, getRegistrationsForExport } from "@/app/actions/admin";
+import { confirmRegistrationPayment, cancelRegistration, adminDeleteRegistration, getRegistrationsForExport } from "@/app/actions/admin";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import { Download, CheckCircle, XCircle } from "lucide-react";
+import { Download, CheckCircle, XCircle, Pencil, Trash2, PlusCircle } from "lucide-react";
 import * as XLSX from "xlsx";
 
 type Registration = {
@@ -52,6 +52,7 @@ interface Props {
 export default function RegistrationsTable({ registrations, events, selectedEventId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const handleConfirm = async (id: string, name: string) => {
     if (!confirm(`確認 ${name} 的報名付款？`)) return;
@@ -69,6 +70,15 @@ export default function RegistrationsTable({ registrations, events, selectedEven
     if (result.error) toast.error(result.error);
     else { toast.success("已取消"); router.refresh(); }
     setLoading(null);
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`確定永久刪除「${name}」的報名資料？此操作無法復原。`)) return;
+    setDeleting(id);
+    const result = await adminDeleteRegistration(id);
+    if (result.error) toast.error(result.error);
+    else { toast.success("已刪除"); router.refresh(); }
+    setDeleting(null);
   };
 
   const handleExport = async () => {
@@ -108,7 +118,12 @@ export default function RegistrationsTable({ registrations, events, selectedEven
           匯出 Excel
         </Button>
 
-        <span className="text-sm text-gray-500 ml-auto">共 {registrations.length} 筆</span>
+        <Button size="sm" onClick={() => router.push("/admin/registrations/new")} className="gap-2 ml-auto">
+          <PlusCircle className="w-4 h-4" />
+          新增報名
+        </Button>
+
+        <span className="text-sm text-gray-500">共 {registrations.length} 筆</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -149,28 +164,49 @@ export default function RegistrationsTable({ registrations, events, selectedEven
                   <TableCell className="font-mono">{reg.transferLastFive ?? "-"}</TableCell>
                   <TableCell className="text-xs">{formatDate(reg.createdAt)}</TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
                       {reg.paymentStatus === "CONFIRMING" && (
                         <Button
                           size="sm"
                           onClick={() => handleConfirm(reg.id, reg.teamName)}
                           disabled={loading === reg.id}
                           className="bg-green-600 hover:bg-green-700 text-white h-7 px-2 text-xs"
+                          title="確認付款"
                         >
                           <CheckCircle className="w-3 h-3" />
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.push(`/admin/registrations/${reg.id}/edit`)}
+                        className="h-7 px-2 text-xs"
+                        title="編輯"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
                       {reg.paymentStatus !== "CANCELLED" && (
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleCancel(reg.id)}
                           disabled={loading === reg.id}
-                          className="h-7 px-2 text-xs"
+                          className="h-7 px-2 text-xs bg-orange-500 hover:bg-orange-600"
+                          title="取消報名"
                         >
                           <XCircle className="w-3 h-3" />
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(reg.id, reg.teamName)}
+                        disabled={deleting === reg.id}
+                        className="h-7 px-2 text-xs"
+                        title="永久刪除"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

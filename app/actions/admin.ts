@@ -2,8 +2,8 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { addYears } from "date-fns";
-import { MEMBERSHIP_PROMO_EXPIRY } from "@/lib/utils";
+import { addYears, differenceInYears } from "date-fns";
+import { MEMBERSHIP_PROMO_EXPIRY, calculatePlayerFee, generateMemberNumber, BANK_INFO } from "@/lib/utils";
 
 async function requireAdmin() {
   const session = await auth();
@@ -306,6 +306,406 @@ export async function getAllMembers(page = 1, pageSize = 20, search = "") {
   ]);
 
   return { members, total, pages: Math.ceil(total / pageSize) };
+}
+
+// 後台手動建立報名
+export async function adminCreateRegistration(data: {
+  eventId: string;
+  groupId: string;
+  teamName: string;
+  genderType: "MALE_TRIPLE" | "FEMALE_TRIPLE" | "MIXED";
+  players: Array<{
+    name: string;
+    nationalId: string;
+    birthday: string;
+    phone: string;
+    email?: string;
+    gender: "MALE" | "FEMALE";
+    emergencyContact?: string;
+    emergencyPhone?: string;
+    memberStatus: "ACTIVE_MEMBER" | "NEW_MEMBER" | "NON_MEMBER";
+  }>;
+  paymentStatus: "PENDING" | "PAID";
+  notes?: string;
+}): Promise<{ success?: boolean; error?: string; registrationId?: string }> {
+  try {
+    const session = await requireAdmin();
+    const { eventId, groupId, teamName, genderType, players, paymentStatus, notes } = data;
+
+    const group = await prisma.eventGroup.findUnique({
+      where: { id: groupId },
+      include: { event: true },
+    });
+    if (!group) return { error: "找不到組別" };
+
+    const maleCount = players.filter((p) => p.gender === "MALE").length;
+    const femaleCount = players.filter((p) => p.gender === "FEMALE").length;
+    if (genderType === "MALE_TRIPLE" && maleCount !== 3) return { error: "男3P必須3位男性選手" };
+    if (genderType === "FEMALE_TRIPLE" && femaleCount !== 3) return { error: "女3P必須3位女性選手" };
+    if (genderType === "MIXED" && !((maleCount === 2 && femaleCount === 1) || (maleCount === 1 && femaleCount === 2)))
+      return { error: "混3P必須2男1女或1男2女" };
+
+    const ages = players.map((p) => differenceInYears(group.event.date, new Date(p.birthday)));
+    const totalAge = ages.reduce((a, b) => a + b, 0);
+    const minAge = Math.min(...ages);
+    if (group.minTotalAge > 0 && totalAge < group.minTotalAge)
+      return { error: `總年齡不足 ${group.minTotalAge} 歲（目前 ${totalAge} 歲）` };
+    if (group.minIndividualAge > 0 && minAge < group.minIndividualAge)
+      return { error: `有選手年齡不足 ${group.minIndividualAge} 歲（最小 ${minAge} 歲）` };
+
+    const nationalIds = players.map((p) => p.nationalId);
+    if (new Set(nationalIds).size !== nationalIds.length) return { error: "同一隊伍中身分證字號不能重複" };
+
+    const existingPlayerRecords = await prisma.registrationPlayer.findMany({
+      where: {
+        nationalId: { in: nationalIds },
+        registration: { eventId, paymentStatus: { not: "CANCELLED" } },
+      },
+      select: { nationalId: true },
+    });
+    const existingCounts = new Map<string, number>();
+    for (const p of existingPlayerRecords) {
+      existingCounts.set(p.nationalId, (existingCounts.get(p.nationalId) ?? 0) + 1);
+    }
+    for (const id of nationalIds) {
+      if ((existingCounts.get(id) ?? 0) >= 2)
+        return { error: `身分證 ${id.slice(0, 3)}****${id.slice(-2)} 已達報名上限（2個組別）` };
+    }
+
+    const isSecondItem = (id: string) => (existingCounts.get(id) ?? 0) >= 1;
+    const playersWithFee = players.map((p) => ({
+      ...p,
+      fee: calculatePlayerFee(p.memberStatus, isSecondItem(p.nationalId)),
+    }));
+    const totalAmount = playersWithFee.reduce((sum, p) => sum + p.fee, 0);
+    const now = new Date();
+
+    const registration = await prisma.registration.create({
+      data: {
+        eventId,
+        groupId,
+        teamName,
+        createdById: session.user.id,
+        genderType,
+        totalAmount,
+        paymentStatus: paymentStatus === "PAID" ? "PAID" : "PENDING",
+        confirmedAt: paymentStatus === "PAID" ? now : null,
+        notes: notes || null,
+        players: {
+          create: playersWithFee.map((p) => ({
+            name: p.name,
+            nationalId: p.nationalId,
+            birthday: new Date(p.birthday),
+            phone: p.phone,
+            email: p.email || null,
+            gender: p.gender,
+            emergencyContact: p.emergencyContact || "",
+            emergencyPhone: p.emergencyPhone || "",
+            memberStatus: p.memberStatus,
+            itemCount: isSecondItem(p.nationalId) ? 2 : 1,
+            fee: p.fee,
+          })),
+        },
+      },
+    });
+
+    await prisma.payment.create({
+      data: {
+        registrationId: registration.id,
+        type: "REGISTRATION_FEE",
+        amount: totalAmount,
+        status: paymentStatus === "PAID" ? "PAID" : "PENDING",
+        bankCode: BANK_INFO.bankCode,
+        bankAccount: BANK_INFO.accountNumber,
+        confirmedAt: paymentStatus === "PAID" ? now : null,
+        notes: notes || null,
+      },
+    });
+
+    revalidatePath("/admin/registrations");
+    revalidatePath("/admin");
+    return { success: true, registrationId: registration.id };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+// 後台手動新增會員
+export async function adminCreateMember(data: {
+  realName: string;
+  nationalId: string;
+  birthday: string;
+  gender: "MALE" | "FEMALE";
+  phone: string;
+  email?: string;
+  expiresAt: string;
+  paymentStatus: "PENDING" | "PAID";
+  notes?: string;
+}): Promise<{ success?: boolean; error?: string; memberId?: string }> {
+  try {
+    await requireAdmin();
+
+    const existing = await prisma.member.findUnique({ where: { nationalId: data.nationalId } });
+    if (existing) return { error: "此身分證已有會員資料" };
+
+    const now = new Date();
+    const isPaid = data.paymentStatus === "PAID";
+
+    const member = await prisma.member.create({
+      data: {
+        memberNumber: generateMemberNumber(),
+        nationalId: data.nationalId,
+        realName: data.realName,
+        birthday: new Date(data.birthday),
+        gender: data.gender,
+        phone: data.phone,
+        email: data.email || null,
+        expiresAt: new Date(data.expiresAt),
+        isActive: isPaid,
+        paymentStatus: isPaid ? "PAID" : "PENDING",
+        confirmedAt: isPaid ? now : null,
+      },
+    });
+
+    if (isPaid) {
+      await prisma.payment.create({
+        data: {
+          memberId: member.id,
+          type: "MEMBERSHIP_FEE",
+          amount: 500,
+          status: "PAID",
+          confirmedAt: now,
+          notes: data.notes || null,
+        },
+      });
+    }
+
+    revalidatePath("/admin/members");
+    revalidatePath("/admin");
+    return { success: true, memberId: member.id };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+// 後台編輯報名資料
+export async function adminUpdateRegistration(
+  registrationId: string,
+  data: {
+    teamName: string;
+    genderType: "MALE_TRIPLE" | "FEMALE_TRIPLE" | "MIXED";
+    paymentStatus: "PENDING" | "CONFIRMING" | "PAID" | "CANCELLED";
+    notes?: string;
+    players: Array<{
+      id?: string;
+      name: string;
+      nationalId: string;
+      birthday: string;
+      phone: string;
+      email?: string;
+      gender: "MALE" | "FEMALE";
+      emergencyContact?: string;
+      emergencyPhone?: string;
+      memberStatus: "ACTIVE_MEMBER" | "NEW_MEMBER" | "NON_MEMBER";
+    }>;
+  }
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+
+    const registration = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      include: { group: { include: { event: true } } },
+    });
+    if (!registration) return { error: "找不到報名資料" };
+
+    const { teamName, genderType, paymentStatus, notes, players } = data;
+    const maleCount = players.filter((p) => p.gender === "MALE").length;
+    const femaleCount = players.filter((p) => p.gender === "FEMALE").length;
+    if (genderType === "MALE_TRIPLE" && maleCount !== 3) return { error: "男3P必須3位男性選手" };
+    if (genderType === "FEMALE_TRIPLE" && femaleCount !== 3) return { error: "女3P必須3位女性選手" };
+    if (genderType === "MIXED" && !((maleCount === 2 && femaleCount === 1) || (maleCount === 1 && femaleCount === 2)))
+      return { error: "混3P必須2男1女或1男2女" };
+
+    const nationalIds = players.map((p) => p.nationalId);
+    if (new Set(nationalIds).size !== nationalIds.length) return { error: "同一隊伍中身分證字號不能重複" };
+
+    const group = registration.group;
+    const eventDate = group.event.date;
+    const ages = players.map((p) => differenceInYears(eventDate, new Date(p.birthday)));
+    const totalAge = ages.reduce((a, b) => a + b, 0);
+    const minAge = Math.min(...ages);
+    if (group.minTotalAge > 0 && totalAge < group.minTotalAge)
+      return { error: `總年齡不足 ${group.minTotalAge} 歲（目前 ${totalAge} 歲）` };
+    if (group.minIndividualAge > 0 && minAge < group.minIndividualAge)
+      return { error: `有選手年齡不足 ${group.minIndividualAge} 歲` };
+
+    // Recalculate fees using current second-item status (excluding this registration)
+    const otherPlayerRecords = await prisma.registrationPlayer.findMany({
+      where: {
+        nationalId: { in: nationalIds },
+        registration: {
+          id: { not: registrationId },
+          eventId: registration.eventId,
+          paymentStatus: { not: "CANCELLED" },
+        },
+      },
+      select: { nationalId: true },
+    });
+    const existingCounts = new Map<string, number>();
+    for (const p of otherPlayerRecords) {
+      existingCounts.set(p.nationalId, (existingCounts.get(p.nationalId) ?? 0) + 1);
+    }
+    const isSecondItem = (id: string) => (existingCounts.get(id) ?? 0) >= 1;
+    const playersWithFee = players.map((p) => ({
+      ...p,
+      fee: calculatePlayerFee(p.memberStatus, isSecondItem(p.nationalId)),
+    }));
+    const totalAmount = playersWithFee.reduce((sum, p) => sum + p.fee, 0);
+
+    const now = new Date();
+    const wasAlreadyPaid = registration.paymentStatus === "PAID";
+    const becomingPaid = paymentStatus === "PAID" && !wasAlreadyPaid;
+
+    await prisma.$transaction([
+      prisma.registration.update({
+        where: { id: registrationId },
+        data: {
+          teamName,
+          genderType,
+          paymentStatus,
+          totalAmount,
+          notes: notes || null,
+          confirmedAt: becomingPaid ? now : registration.confirmedAt,
+        },
+      }),
+      prisma.registrationPlayer.deleteMany({ where: { registrationId } }),
+      prisma.registrationPlayer.createMany({
+        data: playersWithFee.map((p) => ({
+          registrationId,
+          name: p.name,
+          nationalId: p.nationalId,
+          birthday: new Date(p.birthday),
+          phone: p.phone,
+          email: p.email || null,
+          gender: p.gender,
+          emergencyContact: p.emergencyContact || "",
+          emergencyPhone: p.emergencyPhone || "",
+          memberStatus: p.memberStatus,
+          itemCount: isSecondItem(p.nationalId) ? 2 : 1,
+          fee: p.fee,
+        })),
+      }),
+      prisma.payment.updateMany({
+        where: { registrationId, status: { not: "CANCELLED" } },
+        data: {
+          amount: totalAmount,
+          status: paymentStatus === "PAID" ? "PAID" : paymentStatus === "CANCELLED" ? "CANCELLED" : "PENDING",
+          confirmedAt: becomingPaid ? now : undefined,
+          notes: notes || null,
+        },
+      }),
+    ]);
+
+    revalidatePath("/admin/registrations");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+// 後台刪除報名（硬刪除）
+export async function adminDeleteRegistration(
+  registrationId: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    await prisma.payment.deleteMany({ where: { registrationId } });
+    await prisma.registration.delete({ where: { id: registrationId } });
+    revalidatePath("/admin/registrations");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+// 後台編輯會員資料
+export async function adminUpdateMember(
+  memberId: string,
+  data: {
+    realName: string;
+    phone: string;
+    email?: string;
+    expiresAt: string;
+    paymentStatus: "PENDING" | "PAID" | "CANCELLED";
+  }
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+
+    const member = await prisma.member.findUnique({ where: { id: memberId } });
+    if (!member) return { error: "找不到會員" };
+
+    const now = new Date();
+    const isPaid = data.paymentStatus === "PAID";
+    const wasActive = member.isActive;
+
+    await prisma.member.update({
+      where: { id: memberId },
+      data: {
+        realName: data.realName,
+        phone: data.phone,
+        email: data.email || null,
+        expiresAt: new Date(data.expiresAt),
+        paymentStatus: data.paymentStatus,
+        isActive: isPaid,
+        confirmedAt: isPaid && !wasActive ? now : member.confirmedAt,
+      },
+    });
+
+    revalidatePath("/admin/members");
+    return { success: true };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+// 後台刪除會員（硬刪除）
+export async function adminDeleteMember(
+  memberId: string
+): Promise<{ success?: boolean; error?: string }> {
+  try {
+    await requireAdmin();
+    const member = await prisma.member.findUnique({ where: { id: memberId } });
+    if (!member) return { error: "找不到會員" };
+    if (member.userId) return { error: "此會員已綁定帳號，請先解除綁定" };
+    await prisma.payment.deleteMany({ where: { memberId } });
+    await prisma.member.delete({ where: { id: memberId } });
+    revalidatePath("/admin/members");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+}
+
+// 取得單筆報名資料（供後台編輯用）
+export async function getRegistrationForAdmin(registrationId: string) {
+  await requireAdmin();
+  return prisma.registration.findUnique({
+    where: { id: registrationId },
+    include: {
+      event: { select: { id: true, name: true, date: true } },
+      group: {
+        include: {
+          _count: { select: { registrations: { where: { paymentStatus: { not: "CANCELLED" } } } } },
+        },
+      },
+      players: true,
+    },
+  });
 }
 
 // 取得所有報名列表

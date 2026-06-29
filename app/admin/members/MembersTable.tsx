@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { confirmMemberPayment, cancelMembership, extendMembership } from "@/app/actions/admin";
+import { confirmMemberPayment, cancelMembership, extendMembership, adminDeleteMember } from "@/app/actions/admin";
 import { formatDate } from "@/lib/utils";
-import { Search, CheckCircle, Clock, XCircle, CalendarPlus, Ban } from "lucide-react";
+import { Search, CheckCircle, CalendarPlus, Ban, Pencil, Trash2, PlusCircle } from "lucide-react";
 
 type Member = {
   id: string;
@@ -47,6 +47,19 @@ export default function MembersTable({ members, pages, currentPage }: Props) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [extending, setExtending] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleDelete = async (memberId: string, memberName: string) => {
+    if (!confirm(`確定永久刪除「${memberName}」的會員資料？此操作無法復原。`)) return;
+    setDeleting(memberId);
+    try {
+      const result = await adminDeleteMember(memberId);
+      if (result.error) toast.error(result.error);
+      else { toast.success("已刪除"); router.refresh(); }
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,8 +114,8 @@ export default function MembersTable({ members, pages, currentPage }: Props) {
   return (
     <div className="bg-white rounded-lg border shadow-sm">
       {/* Search */}
-      <div className="p-4 border-b">
-        <form onSubmit={handleSearch} className="flex gap-2">
+      <div className="p-4 border-b flex gap-3 flex-wrap items-center">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-0">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
             <Input
@@ -114,6 +127,10 @@ export default function MembersTable({ members, pages, currentPage }: Props) {
           </div>
           <Button type="submit" variant="outline">搜尋</Button>
         </form>
+        <Button size="sm" onClick={() => router.push("/admin/members/new")} className="gap-2 shrink-0">
+          <PlusCircle className="w-4 h-4" />
+          新增會員
+        </Button>
       </div>
 
       {/* Table */}
@@ -202,6 +219,24 @@ export default function MembersTable({ members, pages, currentPage }: Props) {
                             </Button>
                           </>
                         )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(`/admin/members/${member.id}/edit`)}
+                          className="text-gray-700 border-gray-200 hover:bg-gray-50"
+                        >
+                          <Pencil className="w-3.5 h-3.5 mr-1" />
+                          編輯
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(member.id, member.realName)}
+                          disabled={deleting === member.id}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 mr-1" />
+                          {deleting === member.id ? "處理中..." : "刪除"}
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
