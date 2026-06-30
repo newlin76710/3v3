@@ -10,8 +10,6 @@ interface Props {
   includeTime?: boolean;
   disabled?: boolean;
   className?: string;
-  /** Use browser-native date picker instead of select dropdowns. Recommended for birthdays. */
-  native?: boolean;
 }
 
 function daysInMonth(year: number, month: number): number {
@@ -39,7 +37,6 @@ export default function DateSelectPicker({
   includeTime = false,
   disabled,
   className,
-  native = false,
 }: Props) {
   const thisYear = new Date().getFullYear();
   const minY = minYear ?? thisYear - 120;
@@ -86,26 +83,6 @@ export default function DateSelectPicker({
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const minutes = Array.from({ length: 60 }, (_, i) => i);
 
-  if (native) {
-    const minDate = `${minY}-01-01`;
-    const maxDate = `${maxY}-12-31`;
-    const dateValue = value ? value.split("T")[0] : "";
-    return (
-      <input
-        type="date"
-        value={dateValue}
-        min={minDate}
-        max={maxDate}
-        disabled={disabled}
-        onChange={(e) => {
-          const v = e.target.value;
-          if (v) onChange(v);
-        }}
-        className={`flex h-9 w-full max-w-[180px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${className ?? ""}`}
-      />
-    );
-  }
-
   return (
     <div className={`flex flex-wrap gap-1.5 ${className ?? ""}`}>
       <Select
@@ -135,7 +112,7 @@ export default function DateSelectPicker({
         disabled={disabled}
       >
         <SelectTrigger className="w-[86px] h-9"><SelectValue placeholder="月" /></SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-none">
           {months.map((m) => <SelectItem key={m} value={String(m)}>{m} 月</SelectItem>)}
         </SelectContent>
       </Select>

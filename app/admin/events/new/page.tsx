@@ -105,7 +105,6 @@ export default function NewEventPage() {
               <div>
                 <Label>比賽日期 *</Label>
                 <DateSelectPicker
-                  native
                   value={form.date}
                   onChange={(v) => setForm((f) => ({ ...f, date: v }))}
                   minYear={new Date().getFullYear() - 10}
@@ -128,7 +127,6 @@ export default function NewEventPage() {
               <div>
                 <Label>報名開始日期 *</Label>
                 <DateSelectPicker
-                  native
                   value={form.registrationStart}
                   onChange={(v) => setForm((f) => ({ ...f, registrationStart: v }))}
                   minYear={new Date().getFullYear() - 10}
@@ -139,7 +137,6 @@ export default function NewEventPage() {
               <div>
                 <Label>報名截止日期 *</Label>
                 <DateSelectPicker
-                  native
                   value={form.registrationEnd}
                   onChange={(v) => setForm((f) => ({ ...f, registrationEnd: v }))}
                   minYear={new Date().getFullYear() - 10}

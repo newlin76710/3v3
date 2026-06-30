@@ -640,6 +640,8 @@ export async function adminUpdateMember(
     email?: string;
     expiresAt: string;
     paymentStatus: "PENDING" | "PAID" | "CANCELLED";
+    birthday?: string;
+    gender?: "MALE" | "FEMALE";
   }
 ): Promise<{ success?: boolean; error?: string }> {
   try {
@@ -662,6 +664,8 @@ export async function adminUpdateMember(
         paymentStatus: data.paymentStatus,
         isActive: isPaid,
         confirmedAt: isPaid && !wasActive ? now : member.confirmedAt,
+        ...(data.birthday && { birthday: new Date(data.birthday) }),
+        ...(data.gender && { gender: data.gender }),
       },
     });
 

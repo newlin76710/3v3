@@ -75,6 +75,8 @@ export default function AdminMemberForm(props: CreateProps | EditProps) {
           email,
           expiresAt,
           paymentStatus: paymentStatus as "PENDING" | "PAID" | "CANCELLED",
+          birthday,
+          gender: gender as "MALE" | "FEMALE",
         });
       } else {
         result = await adminCreateMember({
@@ -135,42 +137,23 @@ export default function AdminMemberForm(props: CreateProps | EditProps) {
 
           <div>
             <Label>出生日期 *</Label>
-            {props.mode === "edit" ? (
-              <Input
-                value={birthday}
-                disabled
-                className="mt-1 bg-gray-50"
-              />
-            ) : (
-              <DateSelectPicker
-                native
-                value={birthday}
-                onChange={setBirthday}
-                maxYear={new Date().getFullYear()}
-                className="mt-1"
-              />
-            )}
-            {props.mode === "edit" && (
-              <p className="text-xs text-gray-400 mt-1">生日不可修改</p>
-            )}
+            <DateSelectPicker
+              value={birthday}
+              onChange={setBirthday}
+              maxYear={new Date().getFullYear()}
+              className="mt-1"
+            />
           </div>
 
           <div>
             <Label>性別 *</Label>
-            <Select
-              value={gender}
-              onValueChange={setGender}
-              disabled={props.mode === "edit"}
-            >
+            <Select value={gender} onValueChange={setGender}>
               <SelectTrigger className="mt-1"><SelectValue placeholder="請選擇" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="MALE">男</SelectItem>
                 <SelectItem value="FEMALE">女</SelectItem>
               </SelectContent>
             </Select>
-            {props.mode === "edit" && (
-              <p className="text-xs text-gray-400 mt-1">性別不可修改</p>
-            )}
           </div>
 
           <div>
@@ -234,7 +217,7 @@ export default function AdminMemberForm(props: CreateProps | EditProps) {
 
         {props.mode === "edit" && (props as EditProps).hasLinkedUser && (
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-            此會員已綁定網站帳號。身分證、生日、性別由帳號控管，無法在此修改。
+            此會員已綁定網站帳號。身分證字號不可修改；生日與性別由後台管理員更正。
           </div>
         )}
 

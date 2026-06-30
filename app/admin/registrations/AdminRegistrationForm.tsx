@@ -366,7 +366,6 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
                 <div>
                   <Label>出生日期 *</Label>
                   <DateSelectPicker
-                    native
                     value={player.birthday}
                     onChange={(v) => updatePlayer(index, "birthday", v)}
                     maxYear={new Date().getFullYear()}
