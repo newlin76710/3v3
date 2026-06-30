@@ -511,7 +511,7 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                       </div>
                       <div className="sm:col-span-2">
                         <Label>出生日期</Label>
-                        <DateSelectPicker value={userEditForm.birthday} onChange={(v) => setUserEditForm((f) => ({ ...f, birthday: v }))} maxYear={new Date().getFullYear()} className="mt-1" />
+                        <DateSelectPicker native value={userEditForm.birthday} onChange={(v) => setUserEditForm((f) => ({ ...f, birthday: v }))} maxYear={new Date().getFullYear()} className="mt-1" />
                       </div>
                       <div>
                         <Label>聯絡信箱（選填）</Label>
@@ -628,6 +628,7 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                       <div className="sm:col-span-2">
                         <Label>出生日期 *</Label>
                         <DateSelectPicker
+                          native
                           value={editForm.birthday ?? ""}
                           onChange={(v) => setEditForm((f) => ({ ...f, birthday: v }))}
                           maxYear={new Date().getFullYear()}

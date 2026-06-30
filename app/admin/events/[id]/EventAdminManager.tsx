@@ -191,6 +191,7 @@ export default function EventAdminManager({ event }: Props) {
                 <div>
                   <Label>比賽日期 *</Label>
                   <DateSelectPicker
+                    native
                     value={editForm.date}
                     onChange={(v) => setEditForm((f) => ({ ...f, date: v }))}
                     minYear={new Date().getFullYear() - 10}
@@ -211,6 +212,7 @@ export default function EventAdminManager({ event }: Props) {
                 <div>
                   <Label>報名開始</Label>
                   <DateSelectPicker
+                    native
                     value={editForm.registrationStart}
                     onChange={(v) => setEditForm((f) => ({ ...f, registrationStart: v }))}
                     minYear={new Date().getFullYear() - 10}
@@ -221,6 +223,7 @@ export default function EventAdminManager({ event }: Props) {
                 <div>
                   <Label>報名截止</Label>
                   <DateSelectPicker
+                    native
                     value={editForm.registrationEnd}
                     onChange={(v) => setEditForm((f) => ({ ...f, registrationEnd: v }))}
                     minYear={new Date().getFullYear() - 10}

@@ -67,6 +67,7 @@ export default function PaymentForm({ type, registrationId, memberId }: Props) {
       <div>
         <Label>匯款日期 *</Label>
         <DateSelectPicker
+          native
           value={transferDate}
           onChange={(v) => setTransferDate(v)}
           minYear={new Date().getFullYear() - 2}

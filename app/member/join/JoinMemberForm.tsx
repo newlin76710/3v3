@@ -102,6 +102,7 @@ export default function JoinMemberForm({ defaultValues }: Props) {
       <div>
         <Label>出生日期 *</Label>
         <DateSelectPicker
+          native
           value={birthday ?? ""}
           onChange={(v) => setValue("birthday", v, { shouldValidate: true })}
           maxYear={new Date().getFullYear()}

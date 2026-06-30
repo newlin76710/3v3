@@ -143,6 +143,7 @@ export default function AdminMemberForm(props: CreateProps | EditProps) {
               />
             ) : (
               <DateSelectPicker
+                native
                 value={birthday}
                 onChange={setBirthday}
                 maxYear={new Date().getFullYear()}
