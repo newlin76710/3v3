@@ -13,7 +13,8 @@ import { createRegistration, checkPlayerDuplicates, checkMemberships } from "@/a
 import { calculatePlayerFee, formatCurrency } from "@/lib/utils";
 import { differenceInYears } from "date-fns";
 import DateSelectPicker from "@/components/ui/date-select";
-import { Loader2, AlertTriangle, CheckCircle, Users, Info } from "lucide-react";
+import { Loader2, AlertTriangle, CheckCircle, Users, Info, ShieldAlert } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type EventGroup = {
   id: string;
@@ -74,6 +75,7 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
   const [membershipCheck, setMembershipCheck] = useState<Record<string, boolean>>({});
   const [checkingMembership, setCheckingMembership] = useState(false);
   const [validation, setValidation] = useState<string[]>([]);
+  const [consentChecked, setConsentChecked] = useState(false);
 
   const selectedGroup = groups.find((g) => g.id === selectedGroupId);
 
@@ -503,7 +505,53 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
             </div>
           </div>
 
-          {validation.length === 0 && (
+          {/* 健康與安全同意書 */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200">
+              <ShieldAlert className="w-4 h-4 text-gray-600 shrink-0" />
+              <span className="text-sm font-semibold text-gray-800">參賽健康與安全同意切結書</span>
+            </div>
+            <div className="h-48 overflow-y-auto px-4 py-3 text-xs text-gray-600 leading-relaxed space-y-3 bg-white">
+              <p>為保障參賽選手之個人安全，並確保賽事順利進行，請全體參賽者於報名前務必仔細閱讀以下條款。</p>
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">一、健康狀況評估與聲明</p>
+                <p>本人（及本人所代表之參賽隊員）聲明目前身體狀況良好，無任何不適合進行羽球激烈運動之疾病或症狀。</p>
+                <p className="mt-1">本人已知悉羽球競賽屬於高強度之體能運動。若參賽者患有心臟病、高血壓、糖尿病、嚴重氣喘、癲癇、心血管疾病、過度疲勞或正在服用影響反應能力之藥物，或有其他不宜劇烈運動之病歷者，請勿報名參賽。</p>
+                <p className="mt-1">若參賽者隱瞞上述病情或在身體不適之情況下強行參賽，若於賽事期間發生任何意外，其後果須由參賽者自行負責。</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">二、賽場自我保護與安全承諾</p>
+                <p><span className="font-medium">熱身與防護：</span>本人承諾於賽前進行充分之熱身運動，並於賽事期間穿著合適之運動服裝與運動鞋，做好個人防護措施。</p>
+                <p className="mt-1"><span className="font-medium">身體異常處理：</span>比賽過程中，若有任何頭暈、胸悶、呼吸困難、肌肉抽筋或其他身體不適之現象，本人承諾立即停止比賽，並向大會裁判或醫務人員尋求協助，絕不勉強參賽。</p>
+                <p className="mt-1"><span className="font-medium">場上自我保護：</span>本人充分理解羽球運動具備一定的碰撞及受傷風險（如擊球誤傷、扭傷、跌倒等），在場上將保持專注，注意自身與隊友、對手之防守距離，並實施必要之自我保護。</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">三、醫療與保險說明</p>
+                <p>大會於賽事現場僅提供基本緊急傷病急救與現場防護處理。對於參賽者自身突發疾病或因個人體質所致之症狀，不在大會公共意外責任險之理賠範圍內。</p>
+                <p className="mt-1">本人理解大會投保之「公共意外責任險」理賠範圍以大會疏失所致之意外為限。建議參賽者依個人需求，自行加保個人人身意外險或個人旅行平安險。</p>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-700 mb-1">四、法律責任免責聲明</p>
+                <p>本人已審慎評估自身健康狀況，自願參加本賽事。若於賽事期間因自身健康原因、隱瞞病情或不遵守大會安全規範而發生任何傷亡或意外事故，本人及家屬同意自行承擔所有醫療與法律責任，並放棄向主辦單位、協辦單位及相關工作人員追究任何民事或刑事責任。</p>
+              </div>
+            </div>
+            <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <Checkbox
+                  id="consent"
+                  checked={consentChecked}
+                  onCheckedChange={(v) => setConsentChecked(!!v)}
+                  className="mt-0.5 shrink-0"
+                />
+                <span className="text-sm text-gray-700 leading-snug">
+                  我已詳閱、充分理解並同意上述「參賽健康與安全同意切結書」之所有內容，並保證上述聲明皆為屬實。
+                  <span className="text-red-500 ml-1">*</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          {validation.length === 0 && consentChecked && (
             <Alert variant="success">
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>資料驗證通過，可以提交報名</AlertDescription>
@@ -512,7 +560,7 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
 
           <Button
             onClick={handleSubmit}
-            disabled={loading || validation.length > 0 || checkingDuplicates || checkingMembership}
+            disabled={loading || validation.length > 0 || checkingDuplicates || checkingMembership || !consentChecked}
             className="w-full h-12 text-base"
           >
             {loading ? <Loader2 className="animate-spin mr-2" /> : null}
