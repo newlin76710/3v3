@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { addYears, differenceInYears } from "date-fns";
-import { MEMBERSHIP_PROMO_EXPIRY, calculatePlayerFee, generateMemberNumber, BANK_INFO } from "@/lib/utils";
+import { MEMBERSHIP_PROMO_EXPIRY, calculatePlayerFee, generateMemberNumber, BANK_INFO, GENDER_TYPE_LABELS } from "@/lib/utils";
 
 async function requireAdmin() {
   const session = await auth();
@@ -338,6 +338,18 @@ export async function adminCreateRegistration(data: {
     });
     if (!group) return { error: "找不到組別" };
 
+    if (!group.allowedGenders.includes(genderType)) {
+      return { error: `此組別不開放 ${GENDER_TYPE_LABELS[genderType]} 組合` };
+    }
+
+    // 驗證名額（每個組別下的男3P/女3P/混3P名額各自獨立計算）
+    const registrationCount = await prisma.registration.count({
+      where: { groupId, genderType, paymentStatus: { not: "CANCELLED" } },
+    });
+    if (registrationCount >= group.maxTeams) {
+      return { error: `此組別（${GENDER_TYPE_LABELS[genderType]}）名額已滿` };
+    }
+
     const maleCount = players.filter((p) => p.gender === "MALE").length;
     const femaleCount = players.filter((p) => p.gender === "FEMALE").length;
     if (genderType === "MALE_TRIPLE" && maleCount !== 3) return { error: "男3P必須3位男性選手" };
@@ -492,6 +504,7 @@ export async function adminCreateMember(data: {
 export async function adminUpdateRegistration(
   registrationId: string,
   data: {
+    groupId: string;
     teamName: string;
     genderType: "MALE_TRIPLE" | "FEMALE_TRIPLE" | "MIXED";
     paymentStatus: "PENDING" | "CONFIRMING" | "PAID" | "CANCELLED";
@@ -521,7 +534,7 @@ export async function adminUpdateRegistration(
     });
     if (!registration) return { error: "找不到報名資料" };
 
-    const { teamName, genderType, paymentStatus, notes, transferLastFive, transferDate, players } = data;
+    const { groupId, teamName, genderType, paymentStatus, notes, transferLastFive, transferDate, players } = data;
     const maleCount = players.filter((p) => p.gender === "MALE").length;
     const femaleCount = players.filter((p) => p.gender === "FEMALE").length;
     if (genderType === "MALE_TRIPLE" && maleCount !== 3) return { error: "男3P必須3位男性選手" };
@@ -533,7 +546,34 @@ export async function adminUpdateRegistration(
     const nationalIds = players.map((p) => p.nationalId);
     if (new Set(nationalIds).size !== nationalIds.length) return { error: "同一隊伍中身分證字號不能重複" };
 
-    const group = registration.group;
+    // 取得目標組別（可能與原組別不同）
+    const isChangingGroup = groupId !== registration.groupId;
+    const isChangingGenderType = genderType !== registration.genderType;
+    const group = isChangingGroup
+      ? await prisma.eventGroup.findUnique({ where: { id: groupId }, include: { event: true } })
+      : registration.group;
+    if (!group) return { error: "找不到組別" };
+    if (group.eventId !== registration.eventId) return { error: "無法更改為其他賽事的組別" };
+
+    if (!group.allowedGenders.includes(genderType)) {
+      return { error: `此組別不開放 ${GENDER_TYPE_LABELS[genderType]} 組合` };
+    }
+
+    // 更改組別或性別時，重新檢查目標組別+性別的名額上限（排除自己這筆）
+    if (isChangingGroup || isChangingGenderType) {
+      const registrationCount = await prisma.registration.count({
+        where: {
+          groupId,
+          genderType,
+          paymentStatus: { not: "CANCELLED" },
+          id: { not: registrationId },
+        },
+      });
+      if (registrationCount >= group.maxTeams) {
+        return { error: `此組別（${GENDER_TYPE_LABELS[genderType]}）名額已滿，無法變更` };
+      }
+    }
+
     const eventDate = group.event.date;
     const ages = players.map((p) => differenceInYears(eventDate, new Date(p.birthday)));
     const totalAge = ages.reduce((a, b) => a + b, 0);
@@ -574,6 +614,7 @@ export async function adminUpdateRegistration(
       prisma.registration.update({
         where: { id: registrationId },
         data: {
+          groupId,
           teamName,
           genderType,
           paymentStatus,
@@ -720,11 +761,19 @@ export async function getRegistrationForAdmin(registrationId: string) {
 }
 
 // 取得所有報名列表
-export async function getAllRegistrations(eventId?: string) {
+export async function getAllRegistrations(
+  eventId?: string,
+  groupId?: string,
+  genderType?: "MALE_TRIPLE" | "FEMALE_TRIPLE" | "MIXED"
+) {
   await requireAdmin();
 
   return prisma.registration.findMany({
-    where: eventId ? { eventId } : {},
+    where: {
+      ...(eventId ? { eventId } : {}),
+      ...(groupId ? { groupId } : {}),
+      ...(genderType ? { genderType } : {}),
+    },
     include: {
       event: { select: { name: true } },
       group: { select: { name: true } },

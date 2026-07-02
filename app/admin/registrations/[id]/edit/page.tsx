@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getRegistrationForAdmin } from "@/app/actions/admin";
+import { computeGenderCounts } from "@/lib/utils";
 import AdminRegistrationForm from "../../AdminRegistrationForm";
 
 interface Props {
@@ -14,18 +15,27 @@ export default async function AdminEditRegistrationPage({ params }: Props) {
   const registration = await getRegistrationForAdmin(id);
   if (!registration) notFound();
 
-  const events = await prisma.event.findMany({
+  const rawEvents = await prisma.event.findMany({
     include: {
       groups: {
         include: {
-          _count: {
-            select: { registrations: { where: { paymentStatus: { not: "CANCELLED" } } } },
+          registrations: {
+            where: { paymentStatus: { not: "CANCELLED" } },
+            select: { genderType: true },
           },
         },
       },
     },
     orderBy: { date: "desc" },
   });
+
+  const events = rawEvents.map((e) => ({
+    ...e,
+    groups: e.groups.map(({ registrations, ...g }) => ({
+      ...g,
+      genderCounts: computeGenderCounts(registrations),
+    })),
+  }));
 
   const defaultPlayers = registration.players.map((p) => ({
     id: p.id,

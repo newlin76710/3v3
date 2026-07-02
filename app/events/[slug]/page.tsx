@@ -118,7 +118,15 @@ export default async function EventDetailPage({ params }: Props) {
         <h2 className="text-xl font-bold text-gray-900 mb-4">參賽組別</h2>
         <div className="grid md:grid-cols-2 gap-4">
           {event.groups.map((group) => {
-            const isFull = group._count.registrations >= group.maxTeams;
+            // 每個組別下的男3P/女3P/混3P名額各自獨立計算，全部額滿才算此組額滿
+            const isFull = group.allowedGenders.every(
+              (g) => (group.genderCounts[g] ?? 0) >= group.maxTeams
+            );
+            const groupTotal = group.allowedGenders.reduce(
+              (sum, g) => sum + (group.genderCounts[g] ?? 0),
+              0
+            );
+            const groupCapacity = group.maxTeams * group.allowedGenders.length;
 
             return (
               <Card key={group.id} className={isFull ? "opacity-75" : ""}>
@@ -128,7 +136,7 @@ export default async function EventDetailPage({ params }: Props) {
                       <h3 className="font-bold text-lg text-gray-900">{group.name}</h3>
                       <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
                         <Users className="w-3.5 h-3.5" />
-                        <span>{group._count.registrations} / {group.maxTeams} 隊</span>
+                        <span>{groupTotal} / {groupCapacity} 隊</span>
                         {isFull && <Badge variant="destructive" className="ml-2 text-xs">額滿</Badge>}
                       </div>
                     </div>
@@ -154,14 +162,23 @@ export default async function EventDetailPage({ params }: Props) {
                       <span className="text-gray-500 w-20 shrink-0">最低年齡</span>
                       <span className="font-medium">{group.minIndividualAge}+ 歲</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500 w-20 shrink-0">可選組別</span>
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 w-20 shrink-0 mt-0.5">可選組別</span>
                       <div className="flex flex-wrap gap-1">
-                        {group.allowedGenders.map((g) => (
-                          <Badge key={g} variant="outline" className="text-xs">
-                            {genderLabel[g]}
-                          </Badge>
-                        ))}
+                        {group.allowedGenders.map((g) => {
+                          const count = group.genderCounts[g] ?? 0;
+                          const genderFull = count >= group.maxTeams;
+                          return (
+                            <Badge
+                              key={g}
+                              variant={genderFull ? "destructive" : "outline"}
+                              className="text-xs"
+                            >
+                              {genderLabel[g]} {count}/{group.maxTeams}
+                              {genderFull ? " 額滿" : ""}
+                            </Badge>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -174,7 +191,7 @@ export default async function EventDetailPage({ params }: Props) {
                           isFull ? "bg-red-500" : "bg-blue-500"
                         }`}
                         style={{
-                          width: `${Math.min(100, (group._count.registrations / group.maxTeams) * 100)}%`,
+                          width: `${Math.min(100, (groupTotal / groupCapacity) * 100)}%`,
                         }}
                       />
                     </div>

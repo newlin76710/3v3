@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { computeGenderCounts } from "@/lib/utils";
 import EventAdminManager from "./EventAdminManager";
 
 interface Props {
@@ -13,17 +14,30 @@ export default async function EventAdminPage({ params }: Props) {
   if (!session || !["ADMIN", "STAFF"].includes(session.user.role)) redirect("/login");
 
   const { id } = await params;
-  const event = await prisma.event.findUnique({
+  const rawEvent = await prisma.event.findUnique({
     where: { id },
     include: {
       groups: {
-        include: { _count: { select: { registrations: { where: { paymentStatus: { not: "CANCELLED" } } } } } },
+        include: {
+          registrations: {
+            where: { paymentStatus: { not: "CANCELLED" } },
+            select: { genderType: true },
+          },
+        },
         orderBy: { name: "asc" },
       },
     },
   });
 
-  if (!event) notFound();
+  if (!rawEvent) notFound();
+
+  const event = {
+    ...rawEvent,
+    groups: rawEvent.groups.map(({ registrations, ...g }) => ({
+      ...g,
+      genderCounts: computeGenderCounts(registrations),
+    })),
+  };
 
   return (
     <div className="max-w-3xl">

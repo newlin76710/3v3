@@ -59,6 +59,21 @@ export function validateNationalId(id: string): boolean {
   return sum % 10 === 0;
 }
 
+export const GENDER_TYPE_LABELS: Record<string, string> = {
+  MALE_TRIPLE: "男3P",
+  FEMALE_TRIPLE: "女3P",
+  MIXED: "混3P",
+};
+
+// 依組別+性別分組計算已報名隊數（每個組別下的男3P/女3P/混3P名額各自獨立計算）
+export function computeGenderCounts(registrations: { genderType: string }[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const r of registrations) {
+    counts[r.genderType] = (counts[r.genderType] ?? 0) + 1;
+  }
+  return counts;
+}
+
 export const BANK_INFO = {
   bankName: "玉山銀行",
   bankCode: "808",

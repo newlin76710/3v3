@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { computeGenderCounts } from "@/lib/utils";
 
 const eventSchema = z.object({
   name: z.string().min(2, "賽事名稱至少2個字"),
@@ -132,18 +133,27 @@ export async function getPublicEvents() {
 }
 
 export async function getEventBySlug(slug: string) {
-  return prisma.event.findUnique({
+  const event = await prisma.event.findUnique({
     where: { slug },
     include: {
       groups: {
         include: {
-          _count: { select: { registrations: { where: activeRegistrationWhere } } },
           registrations: {
             where: activeRegistrationWhere,
-            include: { players: true },
+            select: { genderType: true },
           },
         },
       },
     },
   });
+  if (!event) return null;
+
+  return {
+    ...event,
+    // 每個組別下的男3P/女3P/混3P名額各自獨立計算，取代整組加總的計數
+    groups: event.groups.map(({ registrations, ...group }) => ({
+      ...group,
+      genderCounts: computeGenderCounts(registrations),
+    })),
+  };
 }

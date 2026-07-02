@@ -26,9 +26,9 @@ export default function AdminSidebar({ user }: Props) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col min-h-screen">
+    <aside className="w-64 bg-gray-900 text-white flex flex-col h-screen shrink-0">
       {/* Logo */}
-      <div className="p-5 border-b border-gray-700">
+      <div className="p-5 border-b border-gray-700 shrink-0">
         <Link href="/admin" className="flex items-center gap-3">
           <img src="/images/3v3.jpg" alt="Logo" className="w-10 h-10 rounded-full object-cover" />
           <div>
@@ -39,7 +39,7 @@ export default function AdminSidebar({ user }: Props) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -65,7 +65,7 @@ export default function AdminSidebar({ user }: Props) {
       </nav>
 
       {/* User */}
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 border-t border-gray-700 shrink-0">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-xs font-bold">
             {user.name?.[0] ?? "A"}

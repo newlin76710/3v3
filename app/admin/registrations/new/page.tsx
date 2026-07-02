@@ -1,22 +1,32 @@
 import { prisma } from "@/lib/prisma";
+import { computeGenderCounts } from "@/lib/utils";
 import AdminRegistrationForm from "../AdminRegistrationForm";
 
 export const metadata = { title: "新增報名 | 後台" };
 
 export default async function AdminNewRegistrationPage() {
-  const events = await prisma.event.findMany({
+  const rawEvents = await prisma.event.findMany({
     where: { isOpen: true },
     include: {
       groups: {
         include: {
-          _count: {
-            select: { registrations: { where: { paymentStatus: { not: "CANCELLED" } } } },
+          registrations: {
+            where: { paymentStatus: { not: "CANCELLED" } },
+            select: { genderType: true },
           },
         },
       },
     },
     orderBy: { date: "desc" },
   });
+
+  const events = rawEvents.map((e) => ({
+    ...e,
+    groups: e.groups.map(({ registrations, ...g }) => ({
+      ...g,
+      genderCounts: computeGenderCounts(registrations),
+    })),
+  }));
 
   return (
     <div>

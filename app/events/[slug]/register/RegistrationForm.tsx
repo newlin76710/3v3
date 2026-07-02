@@ -23,7 +23,7 @@ type EventGroup = {
   minIndividualAge: number;
   allowedGenders: string[];
   maxTeams: number;
-  _count: { registrations: number };
+  genderCounts: Record<string, number>;
 };
 
 type PlayerData = {
@@ -260,15 +260,23 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <Label>選擇組別 *</Label>
-              <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+              <Select
+                value={selectedGroupId}
+                onValueChange={(v) => { setSelectedGroupId(v); setGenderType(""); }}
+              >
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {groups.map((g) => (
-                    <SelectItem key={g.id} value={g.id} disabled={g._count.registrations >= g.maxTeams}>
-                      {g.name}（{g._count.registrations}/{g.maxTeams}隊）
-                      {g._count.registrations >= g.maxTeams ? " [額滿]" : ""}
-                    </SelectItem>
-                  ))}
+                  {groups.map((g) => {
+                    const groupFull = g.allowedGenders.every(
+                      (gt) => (g.genderCounts[gt] ?? 0) >= g.maxTeams
+                    );
+                    return (
+                      <SelectItem key={g.id} value={g.id} disabled={groupFull}>
+                        {g.name}
+                        {groupFull ? "（已額滿）" : ""}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               {selectedGroup && (
@@ -296,15 +304,23 @@ export default function RegistrationForm({ event, groups, defaultGroupId, member
               {["MALE_TRIPLE", "FEMALE_TRIPLE", "MIXED"].map((gt) => {
                 if (!genderTypeOptions.includes(gt)) return null;
                 const labels: Record<string, string> = { MALE_TRIPLE: "男3P", FEMALE_TRIPLE: "女3P", MIXED: "混3P" };
+                const count = selectedGroup?.genderCounts?.[gt] ?? 0;
+                const max = selectedGroup?.maxTeams ?? 0;
+                const isFull = max > 0 && count >= max;
                 const colors: Record<string, string> = {
                   MALE_TRIPLE: genderType === gt ? "bg-blue-600 text-white border-blue-600" : "border-gray-300 text-gray-700 hover:border-blue-400",
                   FEMALE_TRIPLE: genderType === gt ? "bg-pink-600 text-white border-pink-600" : "border-gray-300 text-gray-700 hover:border-pink-400",
                   MIXED: genderType === gt ? "bg-purple-600 text-white border-purple-600" : "border-gray-300 text-gray-700 hover:border-purple-400",
                 };
                 return (
-                  <button key={gt} type="button" onClick={() => setGenderType(gt)}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${colors[gt]}`}>
-                    {labels[gt]}
+                  <button
+                    key={gt}
+                    type="button"
+                    disabled={isFull}
+                    onClick={() => !isFull && setGenderType(gt)}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${colors[gt]} ${isFull ? "opacity-40 cursor-not-allowed" : ""}`}
+                  >
+                    {labels[gt]}（{count}/{max}）{isFull ? " 額滿" : ""}
                   </button>
                 );
               })}

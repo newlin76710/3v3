@@ -26,7 +26,7 @@ type EventWithGroups = {
     minIndividualAge: number;
     allowedGenders: string[];
     maxTeams: number;
-    _count: { registrations: number };
+    genderCounts: Record<string, number>;
   }>;
 };
 
@@ -176,6 +176,7 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
       let result;
       if (props.mode === "edit") {
         result = await adminUpdateRegistration(props.registrationId, {
+          groupId: selectedGroupId,
           teamName,
           genderType: genderType as "MALE_TRIPLE" | "FEMALE_TRIPLE" | "MIXED",
           paymentStatus: paymentStatus as "PENDING" | "CONFIRMING" | "PAID" | "CANCELLED",
@@ -252,14 +253,11 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
               <Select
                 value={selectedGroupId}
                 onValueChange={(v) => { setSelectedGroupId(v); setGenderType(""); }}
-                disabled={props.mode === "edit"}
               >
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {groups.map((g) => (
-                    <SelectItem key={g.id} value={g.id}>
-                      {g.name}（{g._count.registrations}/{g.maxTeams}隊）
-                    </SelectItem>
+                    <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -267,6 +265,9 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
                 <p className="text-xs text-gray-400 mt-1">
                   總年齡 {selectedGroup.minTotalAge}+ ｜ 最低年齡 {selectedGroup.minIndividualAge}+
                 </p>
+              )}
+              {props.mode === "edit" && selectedGroupId !== props.defaultGroupId && (
+                <p className="text-xs text-amber-600 mt-1">＊組別已變更，儲存後將重新檢查年齡與名額</p>
               )}
             </div>
 
@@ -328,6 +329,11 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
             <div className="flex flex-wrap gap-2 mt-2">
               {(["MALE_TRIPLE", "FEMALE_TRIPLE", "MIXED"] as const).map((gt) => {
                 if (genderTypeOptions.length > 0 && !genderTypeOptions.includes(gt)) return null;
+                const count = selectedGroup?.genderCounts?.[gt] ?? 0;
+                const max = selectedGroup?.maxTeams ?? 0;
+                const isCurrentAssignment =
+                  props.mode === "edit" && selectedGroupId === props.defaultGroupId && gt === props.defaultGenderType;
+                const isFull = !isCurrentAssignment && max > 0 && count >= max;
                 const colors: Record<string, string> = {
                   MALE_TRIPLE: genderType === gt ? "bg-blue-600 text-white border-blue-600" : "border-gray-300 text-gray-700 hover:border-blue-400",
                   FEMALE_TRIPLE: genderType === gt ? "bg-pink-600 text-white border-pink-600" : "border-gray-300 text-gray-700 hover:border-pink-400",
@@ -337,10 +343,11 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
                   <button
                     key={gt}
                     type="button"
-                    onClick={() => setGenderType(gt)}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${colors[gt]}`}
+                    disabled={isFull}
+                    onClick={() => !isFull && setGenderType(gt)}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${colors[gt]} ${isFull ? "opacity-40 cursor-not-allowed" : ""}`}
                   >
-                    {genderTypeLabels[gt]}
+                    {genderTypeLabels[gt]}（{count}/{max}）{isFull ? " 額滿" : ""}
                   </button>
                 );
               })}

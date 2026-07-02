@@ -5,7 +5,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { differenceInYears, addYears } from "date-fns";
 import { MEMBERSHIP_PROMO_EXPIRY } from "@/lib/utils";
-import { calculatePlayerFee, generateMemberNumber, BANK_INFO } from "@/lib/utils";
+import { calculatePlayerFee, generateMemberNumber, BANK_INFO, GENDER_TYPE_LABELS } from "@/lib/utils";
 
 const playerSchema = z.object({
   name: z.string().min(2, "姓名至少2個字"),
@@ -51,15 +51,17 @@ export async function createRegistration(data: RegistrationFormData) {
   if (now < event.registrationStart) return { error: "報名尚未開始" };
   if (now > event.registrationEnd) return { error: "報名已截止" };
 
-  // 驗證名額
-  const registrationCount = await prisma.registration.count({
-    where: { groupId, paymentStatus: { not: "CANCELLED" } },
-  });
-  if (registrationCount >= group.maxTeams) return { error: "此組別名額已滿" };
-
   // 驗證組別允許的性別組合
   if (!group.allowedGenders.includes(genderType)) {
     return { error: `此組別不開放 ${genderType} 組合` };
+  }
+
+  // 驗證名額（每個組別下的男3P/女3P/混3P名額各自獨立計算）
+  const registrationCount = await prisma.registration.count({
+    where: { groupId, genderType, paymentStatus: { not: "CANCELLED" } },
+  });
+  if (registrationCount >= group.maxTeams) {
+    return { error: `此組別（${GENDER_TYPE_LABELS[genderType]}）名額已滿` };
   }
 
   // 驗證性別組合

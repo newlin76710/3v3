@@ -64,7 +64,10 @@ export default async function EventsPage() {
                 (sum, g) => sum + g._count.registrations,
                 0
               );
-              const totalCapacity = event.groups.reduce((sum, g) => sum + g.maxTeams, 0);
+              const totalCapacity = event.groups.reduce(
+                (sum, g) => sum + g.maxTeams * g.allowedGenders.length,
+                0
+              );
 
               return (
                 <Card key={event.id} className="overflow-hidden hover:shadow-md transition-shadow">
@@ -104,7 +107,7 @@ export default async function EventsPage() {
                     <div className="flex flex-wrap gap-2 mb-4">
                       {event.groups.map((group) => (
                         <Badge key={group.id} variant="outline" className="text-xs">
-                          {group.name}（{group._count.registrations}/{group.maxTeams}隊）
+                          {group.name}（{group._count.registrations}/{group.maxTeams * group.allowedGenders.length}隊）
                         </Badge>
                       ))}
                     </div>

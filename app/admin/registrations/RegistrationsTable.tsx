@@ -46,13 +46,36 @@ const statusBadge = (status: string) => {
 interface Props {
   registrations: Registration[];
   events: Array<{ id: string; name: string }>;
+  groups: Array<{ id: string; name: string }>;
   selectedEventId?: string;
+  selectedGroupId?: string;
+  selectedGender?: string;
 }
 
-export default function RegistrationsTable({ registrations, events, selectedEventId }: Props) {
+export default function RegistrationsTable({
+  registrations,
+  events,
+  groups,
+  selectedEventId,
+  selectedGroupId,
+  selectedGender,
+}: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  const buildUrl = (next: { event?: string; group?: string; gender?: string }) => {
+    const params = new URLSearchParams();
+    const event = "event" in next ? next.event : selectedEventId;
+    // 換賽事時組別篩選已失去意義，一併清除
+    const group = "event" in next ? undefined : "group" in next ? next.group : selectedGroupId;
+    const gender = "gender" in next ? next.gender : selectedGender;
+    if (event) params.set("event", event);
+    if (group) params.set("group", group);
+    if (gender) params.set("gender", gender);
+    const qs = params.toString();
+    return qs ? `/admin/registrations?${qs}` : "/admin/registrations";
+  };
 
   const handleConfirm = async (id: string, name: string) => {
     if (!confirm(`確認 ${name} 的報名付款？`)) return;
@@ -100,9 +123,9 @@ export default function RegistrationsTable({ registrations, events, selectedEven
       <div className="p-4 border-b flex items-center gap-3 flex-wrap">
         <Select
           value={selectedEventId ?? ""}
-          onValueChange={(v) => router.push(v ? `/admin/registrations?event=${v}` : "/admin/registrations")}
+          onValueChange={(v) => router.push(buildUrl({ event: v || undefined, group: undefined }))}
         >
-          <SelectTrigger className="w-64">
+          <SelectTrigger className="w-56">
             <SelectValue placeholder="選擇賽事篩選" />
           </SelectTrigger>
           <SelectContent>
@@ -110,6 +133,37 @@ export default function RegistrationsTable({ registrations, events, selectedEven
             {events.map((e) => (
               <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={selectedGroupId ?? ""}
+          onValueChange={(v) => router.push(buildUrl({ group: v || undefined }))}
+          disabled={!selectedEventId}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="選擇組別篩選" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">全部組別</SelectItem>
+            {groups.map((g) => (
+              <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={selectedGender ?? ""}
+          onValueChange={(v) => router.push(buildUrl({ gender: v || undefined }))}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="選擇性別篩選" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">男女混不拘</SelectItem>
+            <SelectItem value="MALE_TRIPLE">男3P</SelectItem>
+            <SelectItem value="FEMALE_TRIPLE">女3P</SelectItem>
+            <SelectItem value="MIXED">混3P</SelectItem>
           </SelectContent>
         </Select>
 

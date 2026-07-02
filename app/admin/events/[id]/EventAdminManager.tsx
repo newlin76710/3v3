@@ -20,7 +20,7 @@ type Group = {
   minIndividualAge: number;
   allowedGenders: string[];
   maxTeams: number;
-  _count: { registrations: number };
+  genderCounts: Record<string, number>;
 };
 
 type Event = {
@@ -386,49 +386,62 @@ export default function EventAdminManager({ event }: Props) {
         )}
 
         <div className="space-y-3">
-          {event.groups.map((group) => (
-            <Card key={group.id}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold">{group.name}</h3>
-                      <div className="flex gap-1">
-                        {group.allowedGenders.map((g) => (
-                          <Badge key={g} variant="outline" className="text-xs">{genderLabel[g]}</Badge>
-                        ))}
+          {event.groups.map((group) => {
+            const groupTotal = group.allowedGenders.reduce(
+              (sum, g) => sum + (group.genderCounts[g] ?? 0),
+              0
+            );
+            const groupCapacity = group.maxTeams * group.allowedGenders.length;
+            return (
+              <Card key={group.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold">{group.name}</h3>
+                      </div>
+                      <div className="text-sm text-gray-500 space-x-3">
+                        <span>總年齡 {group.minTotalAge}+</span>
+                        <span>個人 {group.minIndividualAge}+</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {group.allowedGenders.map((g) => {
+                          const count = group.genderCounts[g] ?? 0;
+                          const full = count >= group.maxTeams;
+                          return (
+                            <Badge key={g} variant={full ? "destructive" : "outline"} className="text-xs">
+                              {genderLabel[g]} {count}/{group.maxTeams}{full ? " 額滿" : ""}
+                            </Badge>
+                          );
+                        })}
                       </div>
                     </div>
-                    <div className="text-sm text-gray-500 space-x-3">
-                      <span>總年齡 {group.minTotalAge}+</span>
-                      <span>個人 {group.minIndividualAge}+</span>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0 flex items-center gap-3">
-                    <div>
-                      <div className="flex items-center gap-1 text-sm font-medium">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        {group._count.registrations} / {group.maxTeams}
+                    <div className="text-right shrink-0 flex items-center gap-3">
+                      <div>
+                        <div className="flex items-center gap-1 text-sm font-medium">
+                          <Users className="w-4 h-4 text-gray-400" />
+                          {groupTotal} / {groupCapacity}
+                        </div>
+                        {groupTotal >= groupCapacity && (
+                          <Badge variant="destructive" className="text-xs mt-1">全額滿</Badge>
+                        )}
                       </div>
-                      {group._count.registrations >= group.maxTeams && (
-                        <Badge variant="destructive" className="text-xs mt-1">額滿</Badge>
-                      )}
+                      <button
+                        onClick={() => handleDeleteGroup(group.id, group.name)}
+                        disabled={deletingGroupId === group.id}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-40"
+                        title="刪除組別"
+                      >
+                        {deletingGroupId === group.id
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <Trash2 className="w-4 h-4" />}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleDeleteGroup(group.id, group.name)}
-                      disabled={deletingGroupId === group.id}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-40"
-                      title="刪除組別"
-                    >
-                      {deletingGroupId === group.id
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
-                        : <Trash2 className="w-4 h-4" />}
-                    </button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 

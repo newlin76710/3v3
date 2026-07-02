@@ -67,7 +67,7 @@ export default async function AdminEventsPage() {
                       <div className="flex flex-wrap gap-2 mt-2">
                         {event.groups.map((g) => (
                           <Badge key={g.id} variant="outline" className="text-xs">
-                            {g.name}（{g._count.registrations}/{g.maxTeams}）
+                            {g.name}（{g._count.registrations}/{g.maxTeams * g.allowedGenders.length}）
                           </Badge>
                         ))}
                       </div>
