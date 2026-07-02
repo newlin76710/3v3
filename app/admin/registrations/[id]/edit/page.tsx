@@ -60,6 +60,8 @@ export default async function AdminEditRegistrationPage({ params }: Props) {
         defaultGenderType={registration.genderType}
         defaultPaymentStatus={registration.paymentStatus}
         defaultNotes={registration.notes ?? ""}
+        defaultTransferLastFive={registration.transferLastFive ?? ""}
+        defaultTransferDate={registration.transferDate ? registration.transferDate.toISOString().split("T")[0] : ""}
         defaultPlayers={defaultPlayers}
       />
     </div>

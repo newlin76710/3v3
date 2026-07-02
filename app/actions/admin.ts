@@ -496,6 +496,8 @@ export async function adminUpdateRegistration(
     genderType: "MALE_TRIPLE" | "FEMALE_TRIPLE" | "MIXED";
     paymentStatus: "PENDING" | "CONFIRMING" | "PAID" | "CANCELLED";
     notes?: string;
+    transferLastFive?: string;
+    transferDate?: string;
     players: Array<{
       id?: string;
       name: string;
@@ -519,13 +521,14 @@ export async function adminUpdateRegistration(
     });
     if (!registration) return { error: "找不到報名資料" };
 
-    const { teamName, genderType, paymentStatus, notes, players } = data;
+    const { teamName, genderType, paymentStatus, notes, transferLastFive, transferDate, players } = data;
     const maleCount = players.filter((p) => p.gender === "MALE").length;
     const femaleCount = players.filter((p) => p.gender === "FEMALE").length;
     if (genderType === "MALE_TRIPLE" && maleCount !== 3) return { error: "男3P必須3位男性選手" };
     if (genderType === "FEMALE_TRIPLE" && femaleCount !== 3) return { error: "女3P必須3位女性選手" };
     if (genderType === "MIXED" && !((maleCount === 2 && femaleCount === 1) || (maleCount === 1 && femaleCount === 2)))
       return { error: "混3P必須2男1女或1男2女" };
+    if (transferLastFive && !/^\d{5}$/.test(transferLastFive)) return { error: "匯款末五碼必須是5位數字" };
 
     const nationalIds = players.map((p) => p.nationalId);
     if (new Set(nationalIds).size !== nationalIds.length) return { error: "同一隊伍中身分證字號不能重複" };
@@ -576,6 +579,8 @@ export async function adminUpdateRegistration(
           paymentStatus,
           totalAmount,
           notes: notes || null,
+          transferLastFive: transferLastFive || null,
+          transferDate: transferDate ? new Date(transferDate) : null,
           confirmedAt: becomingPaid ? now : registration.confirmedAt,
         },
       }),
@@ -600,7 +605,9 @@ export async function adminUpdateRegistration(
         where: { registrationId, status: { not: "CANCELLED" } },
         data: {
           amount: totalAmount,
-          status: paymentStatus === "PAID" ? "PAID" : paymentStatus === "CANCELLED" ? "CANCELLED" : "PENDING",
+          status: paymentStatus === "PAID" ? "PAID" : paymentStatus === "CANCELLED" ? "CANCELLED" : paymentStatus === "CONFIRMING" ? "CONFIRMING" : "PENDING",
+          transferLastFive: transferLastFive || null,
+          transferDate: transferDate ? new Date(transferDate) : null,
           confirmedAt: becomingPaid ? now : undefined,
           notes: notes || null,
         },

@@ -72,6 +72,8 @@ interface EditProps {
   defaultGenderType: string;
   defaultPaymentStatus: string;
   defaultNotes: string;
+  defaultTransferLastFive: string;
+  defaultTransferDate: string;
   defaultPlayers: PlayerData[];
 }
 
@@ -96,6 +98,12 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
     props.mode === "edit" ? props.defaultPaymentStatus : "PENDING"
   );
   const [notes, setNotes] = useState(props.mode === "edit" ? props.defaultNotes : "");
+  const [transferLastFive, setTransferLastFive] = useState(
+    props.mode === "edit" ? props.defaultTransferLastFive : ""
+  );
+  const [transferDate, setTransferDate] = useState(
+    props.mode === "edit" ? props.defaultTransferDate : ""
+  );
   const [players, setPlayers] = useState<PlayerData[]>(
     props.mode === "edit" ? props.defaultPlayers : [emptyPlayer(), emptyPlayer(), emptyPlayer()]
   );
@@ -122,6 +130,7 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
     if (!selectedGroupId) return "請選擇組別";
     if (!teamName || teamName.length > 6) return "隊名1-6個字";
     if (!genderType) return "請選擇組別性別";
+    if (transferLastFive && !/^\d{5}$/.test(transferLastFive)) return "匯款末五碼必須是5位數字";
     for (let i = 0; i < players.length; i++) {
       const p = players[i];
       if (!p.name) return `第 ${i + 1} 位選手請填姓名`;
@@ -171,6 +180,8 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
           genderType: genderType as "MALE_TRIPLE" | "FEMALE_TRIPLE" | "MIXED",
           paymentStatus: paymentStatus as "PENDING" | "CONFIRMING" | "PAID" | "CANCELLED",
           notes,
+          transferLastFive,
+          transferDate,
           players: playerData,
         });
       } else {
@@ -284,6 +295,32 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            {props.mode === "edit" && (
+              <>
+                <div>
+                  <Label>匯款末五碼</Label>
+                  <Input
+                    value={transferLastFive}
+                    onChange={(e) => setTransferLastFive(e.target.value.replace(/\D/g, "").slice(0, 5))}
+                    placeholder="請輸入5位數字"
+                    maxLength={5}
+                    inputMode="numeric"
+                    className="mt-1 tracking-widest"
+                  />
+                </div>
+                <div>
+                  <Label>匯款日期</Label>
+                  <DateSelectPicker
+                    value={transferDate}
+                    onChange={(v) => setTransferDate(v)}
+                    minYear={new Date().getFullYear() - 2}
+                    maxYear={new Date().getFullYear()}
+                    className="mt-1"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <div>
