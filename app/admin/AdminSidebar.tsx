@@ -26,7 +26,7 @@ export default function AdminSidebar({ user }: Props) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col h-screen shrink-0">
+    <aside className="w-64 bg-gray-900 text-white flex flex-col h-full shrink-0">
       {/* Logo */}
       <div className="p-5 border-b border-gray-700 shrink-0">
         <Link href="/admin" className="flex items-center gap-3">
