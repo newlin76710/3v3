@@ -125,10 +125,22 @@ export async function registerMember(data: MemberFormData) {
   // 若孤立 Member 已存在（由報名流程建立），直接關聯
   const orphaned = await prisma.member.findUnique({ where: { nationalId } });
   if (orphaned) {
+    // 若入會費已包含在某筆未取消的 NEW_MEMBER 報名（700元）中，就不該再引導使用者另外繳500，避免重複收費
+    const coveringReg = await prisma.registrationPlayer.findFirst({
+      where: {
+        nationalId,
+        memberStatus: "NEW_MEMBER",
+        itemCount: 1,
+        registration: { paymentStatus: { not: "CANCELLED" } },
+      },
+      select: { registrationId: true },
+    });
+    const coveredByRegistrationId = coveringReg?.registrationId ?? null;
+
     if (orphaned.userId) {
       if (orphaned.userId === session.user.id) {
         // 已連結到自己，不需再操作
-        return { success: true, memberNumber: orphaned.memberNumber, linked: true, paymentStatus: orphaned.paymentStatus };
+        return { success: true, memberNumber: orphaned.memberNumber, linked: true, paymentStatus: orphaned.paymentStatus, coveredByRegistrationId };
       }
       return { error: "此身分證字號已被其他帳號使用" };
     }
@@ -137,7 +149,7 @@ export async function registerMember(data: MemberFormData) {
       data: { userId: session.user.id },
     });
     revalidatePath("/member");
-    return { success: true, memberNumber: orphaned.memberNumber, linked: true, paymentStatus: orphaned.paymentStatus };
+    return { success: true, memberNumber: orphaned.memberNumber, linked: true, paymentStatus: orphaned.paymentStatus, coveredByRegistrationId };
   }
 
   const memberNumber = generateMemberNumber();
@@ -172,7 +184,7 @@ export async function registerMember(data: MemberFormData) {
   });
 
   revalidatePath("/member");
-  return { success: true, memberNumber };
+  return { success: true, memberNumber, coveredByRegistrationId: null };
 }
 
 const paymentSchema = z.object({

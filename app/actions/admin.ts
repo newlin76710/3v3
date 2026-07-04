@@ -434,6 +434,33 @@ export async function adminCreateRegistration(data: {
       },
     });
 
+    // 為「新加入會員」選手建立入會申請（孤立 Member，日後由本人以身分證字號認領）
+    for (const p of playersWithFee) {
+      if (p.memberStatus !== "NEW_MEMBER" || isSecondItem(p.nationalId)) continue;
+      const existingMember = await prisma.member.findUnique({ where: { nationalId: p.nationalId } });
+      if (existingMember) continue;
+      try {
+        await prisma.member.create({
+          data: {
+            userId: null,
+            memberNumber: generateMemberNumber(),
+            nationalId: p.nationalId,
+            realName: p.name,
+            birthday: new Date(p.birthday),
+            gender: p.gender,
+            phone: p.phone,
+            email: p.email || null,
+            expiresAt: MEMBERSHIP_PROMO_EXPIRY,
+            isActive: paymentStatus === "PAID",
+            paymentStatus: paymentStatus === "PAID" ? "PAID" : "PENDING",
+            confirmedAt: paymentStatus === "PAID" ? now : null,
+          },
+        });
+      } catch {
+        // Member 建立失敗（如會員編號碰撞），不影響報名本身
+      }
+    }
+
     revalidatePath("/admin/registrations");
     revalidatePath("/admin");
     return { success: true, registrationId: registration.id };
@@ -530,7 +557,10 @@ export async function adminUpdateRegistration(
 
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
-      include: { group: { include: { event: true } } },
+      include: {
+        group: { include: { event: true } },
+        players: { select: { id: true, nationalId: true, memberStatus: true, itemCount: true } },
+      },
     });
     if (!registration) return { error: "找不到報名資料" };
 
@@ -655,8 +685,91 @@ export async function adminUpdateRegistration(
       }),
     ]);
 
+    // 同步更新選手對應的入會申請（Member）：
+    // 1) 選手是本次入會來源（NEW_MEMBER 第1項）但尚無 Member → 建立孤立 Member
+    // 2) 選手仍是入會來源但資料（含身分證字號）有變 → 同步更新尚未被本人認領的 Member 資料
+    // 3) 選手不再是入會來源 → 若無其他有效報名可作為入會來源，清除尚未繳費完成的孤立 Member
+    const oldPlayersById = new Map(registration.players.map((p) => [p.id, p]));
+    for (const p of playersWithFee) {
+      const old = p.id ? oldPlayersById.get(p.id) : undefined;
+      const wasPrimaryNewMember = old?.memberStatus === "NEW_MEMBER" && old.itemCount === 1;
+      const isPrimaryNewMember = p.memberStatus === "NEW_MEMBER" && !isSecondItem(p.nationalId);
+
+      if (isPrimaryNewMember) {
+        let member = await prisma.member.findUnique({ where: { nationalId: p.nationalId } });
+        if (!member && wasPrimaryNewMember && old && old.nationalId !== p.nationalId) {
+          // 身分證字號被修正（如打字錯誤），沿用原本的孤立 Member 記錄
+          member = await prisma.member.findUnique({ where: { nationalId: old.nationalId } });
+        }
+
+        try {
+          if (member) {
+            // 僅同步尚未被本人認領、且尚未繳費完成的孤立 Member，避免覆蓋既有帳號資料
+            if (!member.userId && member.paymentStatus !== "PAID") {
+              await prisma.member.update({
+                where: { id: member.id },
+                data: {
+                  nationalId: p.nationalId,
+                  realName: p.name,
+                  birthday: new Date(p.birthday),
+                  gender: p.gender,
+                  phone: p.phone,
+                  email: p.email || null,
+                  isActive: becomingPaid ? true : member.isActive,
+                  paymentStatus: becomingPaid ? "PAID" : member.paymentStatus,
+                  expiresAt: becomingPaid ? MEMBERSHIP_PROMO_EXPIRY : member.expiresAt,
+                  confirmedAt: becomingPaid ? now : member.confirmedAt,
+                },
+              });
+            } else if (becomingPaid && !member.isActive) {
+              await prisma.member.update({
+                where: { id: member.id },
+                data: { isActive: true, paymentStatus: "PAID", expiresAt: MEMBERSHIP_PROMO_EXPIRY, confirmedAt: now },
+              });
+            }
+          } else {
+            await prisma.member.create({
+              data: {
+                userId: null,
+                memberNumber: generateMemberNumber(),
+                nationalId: p.nationalId,
+                realName: p.name,
+                birthday: new Date(p.birthday),
+                gender: p.gender,
+                phone: p.phone,
+                email: p.email || null,
+                expiresAt: MEMBERSHIP_PROMO_EXPIRY,
+                isActive: becomingPaid,
+                paymentStatus: becomingPaid ? "PAID" : "PENDING",
+                confirmedAt: becomingPaid ? now : null,
+              },
+            });
+          }
+        } catch {
+          // Member 建立/更新失敗（如身分證與其他帳號衝突），不影響報名本身
+        }
+      } else if (wasPrimaryNewMember && old) {
+        // 該選手已不再是本次的入會來源，檢查是否還有其他有效報名可作為入會來源
+        const otherActiveSource = await prisma.registrationPlayer.findFirst({
+          where: {
+            nationalId: old.nationalId,
+            memberStatus: "NEW_MEMBER",
+            itemCount: 1,
+            registration: { id: { not: registrationId }, paymentStatus: { in: ["CONFIRMING", "PAID"] } },
+          },
+        });
+        if (!otherActiveSource) {
+          const member = await prisma.member.findUnique({ where: { nationalId: old.nationalId } });
+          if (member && !member.userId && member.paymentStatus !== "PAID") {
+            await prisma.member.delete({ where: { id: member.id } });
+          }
+        }
+      }
+    }
+
     revalidatePath("/admin/registrations");
     revalidatePath("/admin");
+    revalidatePath("/admin/members");
     return { success: true };
   } catch (e) {
     return { error: (e as Error).message };

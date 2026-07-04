@@ -48,6 +48,9 @@ export default function JoinMemberForm({ defaultValues }: Props) {
       const result = await registerMember(data);
       if (result.error) {
         toast.error(result.error);
+      } else if (result.coveredByRegistrationId) {
+        toast.success("帳號已連結！入會費已包含在報名費用中，請至該筆報名完成繳費，無需另外繳交入會費。");
+        router.push(`/member/payment?type=registration&id=${result.coveredByRegistrationId}`);
       } else if (result.linked && result.paymentStatus && ["PAID", "CONFIRMING"].includes(result.paymentStatus)) {
         toast.success(`帳號已連結！會員編號：${result.memberNumber}`);
         router.push("/member");

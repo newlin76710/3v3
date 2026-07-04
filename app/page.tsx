@@ -318,6 +318,15 @@ export default function Home() {
                 </div>
               </div>
               <div className="contact-item">
+                <div className="contact-icon">📞</div>
+                <div>
+                  <div className="contact-label">聯絡人</div>
+                  <div className="contact-value">
+                    <a href="tel:0919939669">田小姐 0919-939-669</a>
+                  </div>
+                </div>
+              </div>
+              <div className="contact-item">
                 <div className="contact-icon">📘</div>
                 <div>
                   <div className="contact-label">Facebook 粉絲專頁</div>

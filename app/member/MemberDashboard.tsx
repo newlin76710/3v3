@@ -152,17 +152,21 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
     router.refresh();
   };
 
-  // 若某筆報名裡本人是 NEW_MEMBER 第一項（700含入會費），則不重複顯示 MEMBERSHIP_FEE
-  const membershipCoveredByRegistration = member
-    ? registrations.some((r) =>
-        r.players.some(
-          (p) =>
-            p.nationalId === member.nationalId &&
-            p.memberStatus === "NEW_MEMBER" &&
-            p.itemCount === 1
-        )
+  // 若某筆報名裡本人是 NEW_MEMBER 第一項（700含入會費），則不重複顯示 MEMBERSHIP_FEE，
+  // 也不應再另外提示繳交 500 入會費（避免重複收費的困惑）
+  const coveringRegistration = member
+    ? registrations.find(
+        (r) =>
+          r.paymentStatus !== "CANCELLED" &&
+          r.players.some(
+            (p) =>
+              p.nationalId === member.nationalId &&
+              p.memberStatus === "NEW_MEMBER" &&
+              p.itemCount === 1
+          )
       )
-    : false;
+    : undefined;
+  const membershipCoveredByRegistration = !!coveringRegistration;
 
   type AnyPayment = MemberPayment & { eventName?: string; teamName?: string };
   const allPayments: AnyPayment[] = [
@@ -248,7 +252,7 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
               </div>
             </div>
 
-            {member.paymentStatus === "PENDING" && (
+            {member.paymentStatus === "PENDING" && !membershipCoveredByRegistration && (
               <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex gap-3">
                 <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
                 <div>
@@ -257,6 +261,21 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                     請將 NT$ 500 匯款至協會帳號，完成後請至
                     <Link href="/member/payment" className="underline font-medium">填寫匯款末5碼</Link>
                     等待審核。
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {member.paymentStatus === "PENDING" && membershipCoveredByRegistration && coveringRegistration && (
+              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-yellow-800">入會費已包含在報名費用中，請勿重複繳費</p>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    您的入會費已包含在「{coveringRegistration.event.name}」報名費用（{formatCurrency(coveringRegistration.totalAmount)}）中，只需完成該筆報名的匯款即可，無需另外繳交 NT$ 500 入會費。
+                    <Link href={`/member/payment?type=registration&id=${coveringRegistration.id}`} className="underline font-medium ml-1">
+                      前往繳交報名費
+                    </Link>
                   </p>
                 </div>
               </div>
