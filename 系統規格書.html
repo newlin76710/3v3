@@ -428,16 +428,6 @@
   .role-card ul { margin: 0; padding-left: 1.1em; font-size: 13.5px; color: var(--muted); }
   .role-card li { margin-bottom: 4px; }
 
-  /* ---------- Version history ---------- */
-  .version-wrap { margin: 24px 0 0; }
-  .version-wrap .table-wrap { margin: 10px 0 0; }
-  td.vtag {
-    font-family: var(--font-mono);
-    font-weight: 700;
-    color: var(--accent);
-    white-space: nowrap;
-  }
-
   /* ---------- Sitemap tree ---------- */
   .sitemap { list-style: none; margin: 18px 0; padding: 0; max-width: 72ch; }
   .sitemap > li { margin-bottom: 16px; }
@@ -483,6 +473,121 @@
   .swatch .meta { padding: 8px 10px; }
   .swatch .name { font-size: 12.5px; font-weight: 700; }
   .swatch .hex { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+  /* ---------- Flowchart legend ---------- */
+  .fc-legend { display: flex; flex-wrap: wrap; gap: 18px; margin: 16px 0 4px; }
+  .fc-legend .item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+  .fc-legend .swatch-shape { width: 22px; height: 16px; flex-shrink: 0; }
+  .fc-legend .swatch-shape.terminal { border-radius: 999px; border: 1.6px solid var(--ink); background: var(--paper-raise); }
+  .fc-legend .swatch-shape.process { border-radius: 3px; border: 1.4px solid var(--line-strong); background: var(--paper-raise); }
+  .fc-legend .swatch-shape.decision { width: 18px; height: 18px; border: 1.6px solid var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--paper-raise)); transform: rotate(45deg); }
+  .flowchart-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    margin: 16px 0 8px;
+    padding: 8px;
+    background: var(--paper-raise);
+  }
+  .flowchart-wrap svg { display: block; width: 100%; height: auto; min-width: 640px; }
+  .fc-terminal { fill: var(--paper-raise); stroke: var(--ink); stroke-width: 1.6; }
+  .fc-process { fill: var(--paper-raise); stroke: var(--line-strong); stroke-width: 1.4; }
+  .fc-decision { fill: color-mix(in srgb, var(--accent) 10%, var(--paper-raise)); stroke: var(--accent); stroke-width: 1.6; }
+  .fc-edge { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+  .fc-label { font-family: var(--font-body); font-size: 12.5px; fill: var(--ink-soft); }
+  .fc-label-strong { font-family: var(--font-body); font-size: 12.5px; font-weight: 700; fill: var(--ink); }
+  .fc-branch { font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; fill: var(--accent-2); }
+
+  /* ---------- Gantt chart ---------- */
+  .gantt-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    margin: 18px 0 10px;
+    background: var(--paper-raise);
+  }
+  .gantt { min-width: 1220px; }
+  .gantt-header, .gantt-row { display: grid; grid-template-columns: 230px repeat(15, 1fr); }
+  .gantt-header {
+    background: var(--code-bg);
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .gantt-header .corner { padding: 10px 14px; border-right: 1px solid var(--line); }
+  .gantt-header .month {
+    padding: 10px 4px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.01em;
+    color: var(--muted);
+    border-left: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  .gantt-header .month.now { background: var(--accent-2-soft); color: var(--accent-2); font-weight: 700; }
+  .gantt-row { border-bottom: 1px solid var(--line); }
+  .gantt-row:last-child { border-bottom: none; }
+  .gantt-row .label {
+    padding: 12px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    border-right: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+  }
+  .gantt-row .track {
+    position: relative;
+    grid-column: 2 / -1;
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    min-height: 52px;
+  }
+  .gantt-row .track .gcell { border-left: 1px solid var(--line); grid-row: 1; }
+  .gantt-row .track .gcell.now { background: color-mix(in srgb, var(--accent-2) 10%, transparent); }
+  .gantt-bar {
+    grid-row: 1;
+    align-self: center;
+    height: 22px;
+    margin: 0 3px;
+    border-radius: 6px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    padding: 0 9px;
+    overflow: hidden;
+  }
+  .gantt-bar.done { background: color-mix(in srgb, var(--ink) 45%, var(--paper-raise)); }
+  .gantt-bar span {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--accent-ink);
+    white-space: nowrap;
+  }
+  .gantt-bar.done span { color: var(--paper-raise); }
+  .gantt-milestone {
+    grid-row: 1;
+    align-self: center;
+    justify-self: center;
+    width: 16px; height: 16px;
+    background: var(--accent-2);
+    transform: rotate(45deg);
+    border-radius: 3px;
+  }
+  .gantt-foot {
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    border-top: 1px solid var(--line);
+  }
+  .gantt-legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 12px 0 0; font-size: 12.5px; color: var(--muted); }
+  .gantt-legend .item { display: flex; align-items: center; gap: 7px; }
+  .gantt-legend .bar-chip { width: 20px; height: 12px; border-radius: 4px; background: var(--accent); }
+  .gantt-legend .bar-chip.done { background: color-mix(in srgb, var(--ink) 45%, var(--paper-raise)); }
+  .gantt-legend .ms-chip { width: 11px; height: 11px; background: var(--accent-2); transform: rotate(45deg); border-radius: 2px; }
+  .gantt-legend .now-chip { width: 14px; height: 14px; border-radius: 3px; background: var(--accent-2-soft); border: 1px solid var(--accent-2); }
 
   footer.doc-end {
     border-top: 1px solid var(--line);
@@ -537,8 +642,36 @@
     .shell { display: block; }
     main { padding: 0; max-width: 100%; }
     body { background: #fff; color: #000; }
-    section { break-inside: avoid-page; margin-bottom: 34px; }
+    /* Paginate by major section — each numbered chapter (一, 二, 三…) starts on its own page,
+       instead of chapter breaks falling wherever content happens to run out of room. */
+    section { margin-bottom: 0; break-before: page; padding-top: 6px; }
+    .role-card, .arch-box, .swatch, .flow-step, .gantt-row, .doc-meta, tr {
+      break-inside: avoid;
+    }
+    .flowchart-wrap, .gantt-wrap, .fc-legend {
+      break-inside: avoid;
+    }
     .table-wrap, .role-card, .arch-box, .callout { box-shadow: none; }
+    .table-wrap table, .gantt { min-width: 0; }
+    /* Force the flowchart to fit well within one printed page's height (any paper size),
+       instead of scaling to container width — an oversized monolithic box that's taller
+       than a page causes Chromium to fragment it into an empty page + an unstyled page. */
+    .flowchart-wrap svg {
+      min-width: 0;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 200mm;
+      display: block;
+      margin: 0 auto;
+    }
+    .gantt-header, .gantt-row { grid-template-columns: 130px repeat(15, 1fr); }
+    .gantt-row .label { font-size: 10px; padding: 6px 6px; }
+    .gantt-header .month { font-size: 8.5px; padding: 6px 2px; }
+    .gantt-bar span { font-size: 8.5px; }
+    .gantt-row .track { min-height: 32px; }
+    .gantt-bar, .gantt-milestone { height: 16px; }
+    .gantt-milestone { width: 12px; }
     a { color: inherit; text-decoration: none; }
   }
 </style>
@@ -549,7 +682,7 @@
       <div class="toc-mark">
         <div class="toc-badge">3v3</div>
         <div>
-          <small>System Spec · v1.1</small>
+          <small>System Spec · v1.0</small>
         </div>
       </div>
       <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')" type="button" aria-expanded="false" aria-controls="toc">
@@ -570,6 +703,7 @@
         <li><a href="#nonfunc">技術規格與非功能需求</a></li>
         <li><a href="#infra">永久網域與基礎建設永續規劃</a></li>
         <li><a href="#aws">AWS影音串流與檔案儲存建置規劃</a></li>
+        <li><a href="#timeline">開發時程規劃</a></li>
         <li><a href="#benefits">預期效益與衡量指標</a></li>
         <li><a href="#roadmap">未來發展規劃</a></li>
         <li><a href="#appendix">附錄</a></li>
@@ -578,7 +712,7 @@
     <div class="toc-foot">
       社團法人中華台北羽球3對3發展協會<br />
       System Specification Document<br />
-      Rev. 1.1 — 2026-07
+      Rev. 1.0 — 2026-07
     </div>
   </aside>
 
@@ -595,22 +729,9 @@
       <dl class="doc-meta">
         <div><dt>系統名稱</dt><dd>會員暨賽事管理資訊系統</dd></div>
         <div><dt>主管單位</dt><dd>內政部（全國性人民團體）</dd></div>
-        <div><dt>文件版本</dt><dd>v1.1</dd></div>
+        <div><dt>文件版本</dt><dd>v1.0</dd></div>
         <div><dt>發布日期</dt><dd>2026 年 7 月</dd></div>
       </dl>
-
-      <div class="version-wrap">
-        <span class="eyebrow" style="margin-bottom:0;">文件版本紀錄</span>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th style="width:70px;">版本</th><th style="width:110px;">日期</th><th>修訂內容</th></tr></thead>
-            <tbody>
-              <tr><td class="vtag">v1.0</td><td>2026-07</td><td>初版發布：系統背景、功能模組、資料庫設計、資安機制與技術規格。</td></tr>
-              <tr><td class="vtag">v1.1</td><td>2026-07</td><td>新增 UI/UX 整體視覺設計與介面流程規劃、永久網域與固定 IP 基礎建設規劃、AWS 影音串流與檔案儲存建置規劃，並將照片／影片上傳功能納入功能模組與未來發展規劃。</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
 
     <section id="bg">
@@ -799,9 +920,9 @@
 
       <h3>（三）UI/UX 精進規劃</h3>
       <ul class="plain">
-        <li><span class="pill">規劃中</span> <strong>統一設計系統文件</strong>：制定跨官網與後台之共用設計代幣（色彩、字級、間距、元件狀態），收斂現行雙視覺語彙之落差，並建立元件庫規範供後續開發依循。</li>
-        <li><span class="pill">規劃中</span> <strong>互動原型與可用性測試</strong>：以 Figma 建立正式互動原型，於重要功能（報名、繳費回填）上線前進行使用者測試，降低操作疑慮與客服負擔。</li>
-        <li><span class="pill">規劃中</span> <strong>無障礙檢核</strong>：依 WCAG 2.1 AA 標準檢視色彩對比、鍵盤可操作性與螢幕閱讀器相容性，提升不同族群會員之使用可及性。</li>
+        <li><strong>統一設計系統文件</strong>：制定跨官網與後台之共用設計代幣（色彩、字級、間距、元件狀態），收斂現行雙視覺語彙之落差，並建立元件庫規範供後續開發依循。</li>
+        <li><strong>互動原型與可用性測試</strong>：以 Figma 建立正式互動原型，於重要功能（報名、繳費回填）上線前進行使用者測試，降低操作疑慮與客服負擔。</li>
+        <li><strong>無障礙檢核</strong>：依 WCAG 2.1 AA 標準檢視色彩對比、鍵盤可操作性與螢幕閱讀器相容性，提升不同族群會員之使用可及性。</li>
       </ul>
     </section>
 
@@ -846,10 +967,10 @@
         <li><strong>使用者權限管理</strong>：Admin 可調整帳號角色（Member／Staff／Admin）。</li>
       </ul>
 
-      <h3>（七）照片與影片上傳中心 <span class="tag">Media Upload</span> <span class="pill">規劃中</span></h3>
+      <h3>（七）照片與影片上傳中心 <span class="tag">Media Upload</span></h3>
       <p>
         現行「協會照片」為固定於程式碼庫中之靜態圖片，需由工程人員手動更新，會員與工作人員均無法自行上傳。
-        規劃中之照片與影片上傳中心，將開放工作人員（後續評估開放會員）直接上傳賽事照片與精華影片，
+        照片與影片上傳中心將開放工作人員（後續評估開放會員）直接上傳賽事照片與精華影片，
         經後台審核後自動發布於官網相簿與賽事花絮頁面，實作方式詳見第十二節「AWS 影音串流與檔案儲存建置規劃」。
       </p>
     </section>
@@ -897,6 +1018,135 @@
         <div class="flow-step"><div class="dot">4</div><div><h4>匯款並回填資料</h4><p>依系統顯示金額轉帳，並回填末5碼與轉帳日期。</p></div></div>
         <div class="flow-step stop"><div class="dot">✓</div><div><h4>後台確認並啟用</h4><p>工作人員確認款項到帳，系統同步更新報名狀態，並為「新加入會員」選手啟用會籍。</p></div></div>
       </div>
+
+      <h3>（三）系統流程圖（System Flowchart）：賽事報名與繳費核心決策邏輯</h3>
+      <p>
+        以下流程圖以標準符號完整呈現賽事報名自送出、費用計算、金流確認至會籍啟用之資料流動路徑與邏輯決策點，
+        對應系統中報名建立、匯款回填與後台審核確認等處理程序：
+      </p>
+      <div class="fc-legend">
+        <div class="item"><span class="swatch-shape terminal"></span>起訖（流程開始／結束）</div>
+        <div class="item"><span class="swatch-shape process"></span>處理程序</div>
+        <div class="item"><span class="swatch-shape decision"></span>邏輯決策點</div>
+      </div>
+      <div class="flowchart-wrap">
+        <svg viewBox="0 0 860 1190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="賽事報名與繳費系統流程圖">
+          <defs>
+            <marker id="fcArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" class="fc-edge" style="fill:var(--muted);stroke:none;"></path>
+            </marker>
+          </defs>
+
+          <!-- main spine edges -->
+          <line x1="310" y1="75"   x2="310" y2="118" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <line x1="310" y1="180"  x2="310" y2="218" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <line x1="310" y1="320"  x2="310" y2="365" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <text x="324" y="345" class="fc-branch">是</text>
+          <line x1="310" y1="433"  x2="310" y2="468" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <line x1="310" y1="570"  x2="310" y2="615" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <text x="324" y="595" class="fc-branch">否</text>
+          <line x1="310" y1="683"  x2="310" y2="718" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <line x1="310" y1="820"  x2="310" y2="865" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <text x="324" y="845" class="fc-branch">是</text>
+          <line x1="310" y1="933"  x2="310" y2="968" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <line x1="310" y1="1070" x2="310" y2="1093" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <text x="324" y="1085" class="fc-branch">否</text>
+
+          <!-- branch edges to side column -->
+          <line x1="470" y1="270"  x2="578" y2="270"  class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <text x="500" y="262" class="fc-branch">否</text>
+          <line x1="700" y1="298"  x2="700" y2="353"  class="fc-edge" marker-end="url(#fcArrow)"></line>
+
+          <line x1="470" y1="520"  x2="578" y2="520"  class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <text x="500" y="512" class="fc-branch">是</text>
+          <path d="M700,548 L700,650 L442,650" class="fc-edge" marker-end="url(#fcArrow)"></path>
+
+          <line x1="470" y1="770"  x2="578" y2="770"  class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <text x="500" y="762" class="fc-branch">否</text>
+          <line x1="700" y1="798"  x2="700" y2="853"  class="fc-edge" marker-end="url(#fcArrow)"></line>
+
+          <line x1="470" y1="1020" x2="578" y2="1020" class="fc-edge" marker-end="url(#fcArrow)"></line>
+          <text x="500" y="1012" class="fc-branch">是</text>
+          <path d="M700,1048 L700,1120 L442,1120" class="fc-edge" marker-end="url(#fcArrow)"></path>
+
+          <!-- n1 terminal -->
+          <rect x="180" y="25" width="260" height="50" rx="25" class="fc-terminal"></rect>
+          <text x="310" y="55" text-anchor="middle" class="fc-label-strong">開始：會員送出賽事報名</text>
+
+          <!-- n2 process -->
+          <rect x="180" y="120" width="260" height="60" rx="6" class="fc-process"></rect>
+          <text x="310" y="146" text-anchor="middle" class="fc-label">系統驗證組別、性別組合、</text>
+          <text x="310" y="163" text-anchor="middle" class="fc-label">年齡與名額限制</text>
+
+          <!-- n3 decision -->
+          <polygon points="310,220 470,270 310,320 150,270" class="fc-decision"></polygon>
+          <text x="310" y="275" text-anchor="middle" class="fc-label-strong">驗證是否通過？</text>
+
+          <!-- n4 process -->
+          <rect x="180" y="367" width="260" height="66" rx="6" class="fc-process"></rect>
+          <text x="310" y="393" text-anchor="middle" class="fc-label">計算應繳費用，建立報名</text>
+          <text x="310" y="410" text-anchor="middle" class="fc-label">與待付款紀錄（PENDING）</text>
+
+          <!-- n5 decision -->
+          <polygon points="310,470 470,520 310,570 150,520" class="fc-decision"></polygon>
+          <text x="310" y="513" text-anchor="middle" class="fc-label-strong">選手是否為</text>
+          <text x="310" y="530" text-anchor="middle" class="fc-label-strong">新加入會員？</text>
+
+          <!-- n6 process -->
+          <rect x="180" y="617" width="260" height="66" rx="6" class="fc-process"></rect>
+          <text x="310" y="643" text-anchor="middle" class="fc-label">會員回填末5碼與轉帳日期</text>
+          <text x="310" y="660" text-anchor="middle" class="fc-label">狀態轉為 CONFIRMING</text>
+
+          <!-- n7 decision -->
+          <polygon points="310,720 470,770 310,820 150,770" class="fc-decision"></polygon>
+          <text x="310" y="763" text-anchor="middle" class="fc-label-strong">銀行明細比對</text>
+          <text x="310" y="780" text-anchor="middle" class="fc-label-strong">款項是否正確？</text>
+
+          <!-- n8 process -->
+          <rect x="180" y="867" width="260" height="66" rx="6" class="fc-process"></rect>
+          <text x="310" y="893" text-anchor="middle" class="fc-label">報名與付款狀態</text>
+          <text x="310" y="910" text-anchor="middle" class="fc-label">更新為 PAID</text>
+
+          <!-- n9 decision -->
+          <polygon points="310,970 470,1020 310,1070 150,1020" class="fc-decision"></polygon>
+          <text x="310" y="1013" text-anchor="middle" class="fc-label-strong">選手是否為</text>
+          <text x="310" y="1030" text-anchor="middle" class="fc-label-strong">新加入會員？</text>
+
+          <!-- n10 terminal -->
+          <rect x="180" y="1095" width="260" height="50" rx="25" class="fc-terminal"></rect>
+          <text x="310" y="1120" text-anchor="middle" class="fc-label-strong">結束：報名完成</text>
+          <text x="310" y="1136" text-anchor="middle" class="fc-label-strong">（會籍如適用已同步啟用）</text>
+
+          <!-- sA branch -->
+          <rect x="580" y="242" width="240" height="56" rx="6" class="fc-process"></rect>
+          <text x="700" y="265" text-anchor="middle" class="fc-label">顯示錯誤訊息</text>
+          <text x="700" y="282" text-anchor="middle" class="fc-label">中止本次報名</text>
+          <rect x="580" y="355" width="240" height="50" rx="25" class="fc-terminal"></rect>
+          <text x="700" y="385" text-anchor="middle" class="fc-label-strong">結束（報名未成立）</text>
+
+          <!-- sB branch -->
+          <rect x="580" y="492" width="240" height="56" rx="6" class="fc-process"></rect>
+          <text x="700" y="515" text-anchor="middle" class="fc-label">建立孤立會員申請</text>
+          <text x="700" y="532" text-anchor="middle" class="fc-label">（Member，PENDING）</text>
+
+          <!-- sC branch -->
+          <rect x="580" y="742" width="240" height="56" rx="6" class="fc-process"></rect>
+          <text x="700" y="765" text-anchor="middle" class="fc-label">通知會員確認</text>
+          <text x="700" y="782" text-anchor="middle" class="fc-label">匯款資料</text>
+          <rect x="580" y="855" width="240" height="50" rx="25" class="fc-terminal"></rect>
+          <text x="700" y="885" text-anchor="middle" class="fc-label-strong">結束（待補件）</text>
+
+          <!-- sD branch -->
+          <rect x="580" y="992" width="240" height="56" rx="6" class="fc-process"></rect>
+          <text x="700" y="1015" text-anchor="middle" class="fc-label">啟用會員資格</text>
+          <text x="700" y="1032" text-anchor="middle" class="fc-label">設定會籍到期日</text>
+        </svg>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:4px;">
+        圖示對應本會系統之 <code>Registration</code>／<code>Payment</code>／<code>Member</code> 三張核心資料表狀態轉換，
+        「新加入會員」選手於報名建立時即產生待認領之 Member 紀錄，並於付款確認後同步啟用會籍，
+        確保報名金額、付款狀態與會籍狀態三者一致，避免資料脫節。
+      </p>
     </section>
 
     <section id="security">
@@ -1002,8 +1252,153 @@
       </div>
     </section>
 
+    <section id="timeline">
+      <h2><span class="no">十三</span>開發時程規劃</h2>
+      <p class="lead">
+        本系統自 2026 年 1 月起著手架設，經 1 個月 UI/UX 視覺設計、5 個月開發後於同年 6 月正式上線，
+        上線後隨即進入除錯與功能調整階段；截至本文件撰寫之 2026 年 7 月，賽事報名與繳費流程已可正常運作。
+        以下時程完整呈現自建置起至今之實際執行歷程，並接續第五節 UI/UX 精進、第十一節網域與基礎建設、
+        第十二節 AWS 影音建置等後續工作之規劃排程，對齊
+        <strong>2026 年 12 月 20 日「第一屆中華盃全國羽球3對3錦標賽」</strong>作為照片與影片上傳功能之首次實地導入時點。
+      </p>
+      <div class="gantt-wrap">
+        <div class="gantt">
+          <div class="gantt-header">
+            <div class="corner"></div>
+            <div class="month">2026/01</div>
+            <div class="month">2026/02</div>
+            <div class="month">2026/03</div>
+            <div class="month">2026/04</div>
+            <div class="month">2026/05</div>
+            <div class="month">2026/06</div>
+            <div class="month now">2026/07</div>
+            <div class="month">2026/08</div>
+            <div class="month">2026/09</div>
+            <div class="month">2026/10</div>
+            <div class="month">2026/11</div>
+            <div class="month">2026/12</div>
+            <div class="month">2027/01</div>
+            <div class="month">2027/02</div>
+            <div class="month">2027/03</div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">UI/UX 視覺設計（首版）</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-bar done" style="grid-column:1 / 2;"><span>UI/UX 設計</span></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">系統開發<br /><span style="font-weight:400;color:var(--muted);font-size:11.5px;">會員系統／賽事報名／後台管理</span></div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-bar done" style="grid-column:2 / 7;"><span>系統開發（5個月）</span></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">正式上線</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-milestone" style="grid-column:6;" title="2026/06 正式上線"></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">上線後除錯與功能調整<br /><span style="font-weight:400;color:var(--muted);font-size:11.5px;">含報名／繳費流程修正</span></div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-bar done" style="grid-column:6 / 8;"><span>除錯／調整</span></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">現況：報名與繳費功能已可正常使用</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-milestone" style="grid-column:7;" title="2026/07 現況"></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">UI/UX 統一設計系統與原型建置</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-bar" style="grid-column:8 / 10;"><span>UI/UX 統一設計</span></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">網域法人化與基礎建設規劃</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-bar" style="grid-column:8 / 10;"><span>網域／IP</span></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">AWS Phase 1：照片上傳與後台審核</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-bar" style="grid-column:9 / 11;"><span>Phase 1</span></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">AWS Phase 2：影片上傳與轉檔<br /><span style="font-weight:400;color:var(--muted);font-size:11.5px;">MediaConvert + CloudFront</span></div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-bar" style="grid-column:10 / 13;"><span>Phase 2</span></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">中華盃錦標賽・首次實地導入</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-milestone" style="grid-column:12;" title="2026/12/20 中華盃"></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">整合測試與幹部教育訓練</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-bar" style="grid-column:11 / 14;"><span>測試／訓練</span></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">AWS Phase 3：直播服務評估與規劃</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-bar" style="grid-column:13 / 15;"><span>Phase 3</span></div>
+            </div>
+          </div>
+
+          <div class="gantt-row">
+            <div class="label">成果驗收與結案報告</div>
+            <div class="track">
+              <i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell now"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i><i class="gcell"></i>
+              <div class="gantt-milestone" style="grid-column:15;" title="2027/03 結案"></div>
+            </div>
+          </div>
+
+          <div class="gantt-foot">時間軸涵蓋 2026 年 1 月至 2027 年 3 月，共 15 個月；前 7 個月（2026/01–07）為系統建置與上線之實際歷程，其後為後續建置規劃，實際執行期程將依補助核定金額與到位時間調整。</div>
+        </div>
+      </div>
+      <div class="gantt-legend">
+        <div class="item"><span class="bar-chip done"></span>已完成</div>
+        <div class="item"><span class="bar-chip"></span>後續期程</div>
+        <div class="item"><span class="ms-chip"></span>里程碑（單一時間點）</div>
+        <div class="item"><span class="now-chip"></span>現況所在月份</div>
+      </div>
+    </section>
+
     <section id="benefits">
-      <h2><span class="no">十三</span>預期效益與衡量指標</h2>
+      <h2><span class="no">十四</span>預期效益與衡量指標</h2>
       <p class="lead">系統上線後，本會將以下列面向作為導入成效之觀察指標：</p>
       <div class="table-wrap">
         <table>
@@ -1020,7 +1415,7 @@
     </section>
 
     <section id="roadmap">
-      <h2><span class="no">十四</span>未來發展規劃</h2>
+      <h2><span class="no">十五</span>未來發展規劃</h2>
       <ol class="plain">
         <li><strong>照片與影片上傳中心</strong>：依第十二節建置規劃分階段導入 AWS 儲存與轉檔架構，開放工作人員自行上傳並管理賽事照片與影片。</li>
         <li><strong>網域法人化與固定 IP 節點</strong>：依第十一節規劃完成網域法人化移轉，並視影音串流需求建置固定 IP 服務節點。</li>
@@ -1032,7 +1427,7 @@
     </section>
 
     <section id="appendix">
-      <h2><span class="no">十五</span>附錄</h2>
+      <h2><span class="no">十六</span>附錄</h2>
 
       <h3>（一）報名費用試算規則</h3>
       <div class="table-wrap">
@@ -1065,7 +1460,7 @@
 
     <footer class="doc-end">
       <span>社團法人中華台北羽球3對3發展協會 · 會員暨賽事管理資訊系統</span>
-      <span>System Specification · Rev. 1.1 · 2026-07</span>
+      <span>System Specification · Rev. 1.0 · 2026-07</span>
     </footer>
   </main>
 </div>
