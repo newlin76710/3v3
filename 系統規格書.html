@@ -428,6 +428,62 @@
   .role-card ul { margin: 0; padding-left: 1.1em; font-size: 13.5px; color: var(--muted); }
   .role-card li { margin-bottom: 4px; }
 
+  /* ---------- Version history ---------- */
+  .version-wrap { margin: 24px 0 0; }
+  .version-wrap .table-wrap { margin: 10px 0 0; }
+  td.vtag {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* ---------- Sitemap tree ---------- */
+  .sitemap { list-style: none; margin: 18px 0; padding: 0; max-width: 72ch; }
+  .sitemap > li { margin-bottom: 16px; }
+  .sitemap .tier-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sitemap .tier-label .who { color: var(--ink); font-family: var(--font-body); font-size: 13.5px; font-weight: 700; text-transform: none; letter-spacing: 0; }
+  .sitemap ul {
+    list-style: none;
+    margin: 10px 0 0;
+    padding-left: 20px;
+    border-left: 1px dashed var(--line-strong);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sitemap ul li {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    position: relative;
+    padding-left: 16px;
+  }
+  .sitemap ul li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 9px;
+    width: 10px; height: 1px;
+    background: var(--line-strong);
+  }
+  .sitemap ul li .path { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); margin-left: 6px; }
+
+  /* ---------- Design tokens swatches ---------- */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 12px; margin: 18px 0 8px; }
+  .swatch { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper-raise); box-shadow: var(--shadow); }
+  .swatch .chip { height: 52px; }
+  .swatch .meta { padding: 8px 10px; }
+  .swatch .name { font-size: 12.5px; font-weight: 700; }
+  .swatch .hex { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
   footer.doc-end {
     border-top: 1px solid var(--line);
     padding-top: 24px;
@@ -493,7 +549,7 @@
       <div class="toc-mark">
         <div class="toc-badge">3v3</div>
         <div>
-          <small>System Spec · v1.0</small>
+          <small>System Spec · v1.1</small>
         </div>
       </div>
       <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')" type="button" aria-expanded="false" aria-controls="toc">
@@ -506,11 +562,14 @@
         <li><a href="#goals">系統目標與預期效益</a></li>
         <li><a href="#users">使用對象與角色</a></li>
         <li><a href="#arch">系統架構</a></li>
+        <li><a href="#uiux">UI/UX 視覺設計與介面流程規劃</a></li>
         <li><a href="#modules">功能模組規格</a></li>
         <li><a href="#data">資料庫設計</a></li>
         <li><a href="#flows">關鍵作業流程</a></li>
         <li><a href="#security">資安與隱私保護</a></li>
         <li><a href="#nonfunc">技術規格與非功能需求</a></li>
+        <li><a href="#infra">永久網域與基礎建設永續規劃</a></li>
+        <li><a href="#aws">AWS影音串流與檔案儲存建置規劃</a></li>
         <li><a href="#benefits">預期效益與衡量指標</a></li>
         <li><a href="#roadmap">未來發展規劃</a></li>
         <li><a href="#appendix">附錄</a></li>
@@ -519,7 +578,7 @@
     <div class="toc-foot">
       社團法人中華台北羽球3對3發展協會<br />
       System Specification Document<br />
-      Rev. 1.0 — 2026-07
+      Rev. 1.1 — 2026-07
     </div>
   </aside>
 
@@ -536,9 +595,22 @@
       <dl class="doc-meta">
         <div><dt>系統名稱</dt><dd>會員暨賽事管理資訊系統</dd></div>
         <div><dt>主管單位</dt><dd>內政部（全國性人民團體）</dd></div>
-        <div><dt>文件版本</dt><dd>v1.0</dd></div>
+        <div><dt>文件版本</dt><dd>v1.1</dd></div>
         <div><dt>發布日期</dt><dd>2026 年 7 月</dd></div>
       </dl>
+
+      <div class="version-wrap">
+        <span class="eyebrow" style="margin-bottom:0;">文件版本紀錄</span>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th style="width:70px;">版本</th><th style="width:110px;">日期</th><th>修訂內容</th></tr></thead>
+            <tbody>
+              <tr><td class="vtag">v1.0</td><td>2026-07</td><td>初版發布：系統背景、功能模組、資料庫設計、資安機制與技術規格。</td></tr>
+              <tr><td class="vtag">v1.1</td><td>2026-07</td><td>新增 UI/UX 整體視覺設計與介面流程規劃、永久網域與固定 IP 基礎建設規劃、AWS 影音串流與檔案儲存建置規劃，並將照片／影片上傳功能納入功能模組與未來發展規劃。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <section id="bg">
@@ -671,8 +743,70 @@
       </p>
     </section>
 
+    <section id="uiux">
+      <h2><span class="no">五</span>UI/UX 整體視覺設計與介面流程規劃</h2>
+      <p class="lead">
+        本節盤點系統現行之視覺識別與介面設計現況，並提出後續統一設計系統、優化介面流程之規劃方向，
+        作為使用者體驗精進與後續開發之依據。
+      </p>
+
+      <h3>（一）現行視覺設計系統</h3>
+      <p>系統現階段依使用情境分為兩套視覺語彙，分別對應「對外行銷推廣」與「會務操作」兩種不同的介面目標：</p>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:#1a1a2e;"></div><div class="meta"><div class="name">深藏青（主色）</div><div class="hex">#1a1a2e</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#0f3460;"></div><div class="meta"><div class="name">夜藍（漸層）</div><div class="hex">#0f3460</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#c0392b;"></div><div class="meta"><div class="name">警示紅（強調）</div><div class="hex">#c0392b</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#2980b9;"></div><div class="meta"><div class="name">資訊藍（次強調）</div><div class="hex">#2980b9</div></div></div>
+        <div class="swatch"><div class="chip" style="background:#f4f6f9;"></div><div class="meta"><div class="name">淺灰（版面底色）</div><div class="hex">#f4f6f9</div></div></div>
+        <div class="swatch"><div class="chip" style="background:hsl(221.2 83.2% 53.3%);"></div><div class="meta"><div class="name">系統藍（後台元件）</div><div class="hex">shadcn primary</div></div></div>
+      </div>
+      <ul class="plain">
+        <li><strong>對外官網識別</strong>：以深藏青漸層背景（#1a1a2e → #16213e → #0f3460）為主視覺基調，搭配警示紅與資訊藍雙強調色，用於首頁、賽事介紹與報名頁之標題區塊與行動呼籲按鈕，塑造賽事之競技張力與品牌識別度。</li>
+        <li><strong>會員與後台介面識別</strong>：採 shadcn/ui 元件庫之中性藍階配色與 8px 圓角系統，優先考量操作效率與資訊密度，降低視覺干擾，符合表單填寫、資料稽核等任務型介面之設計原則。</li>
+        <li><strong>字體規劃</strong>：全站中文採 Noto Sans TC（400／600／700／900 字重），並透過 Next.js 字型最佳化機制於建置期完成字型子集化與預先載入，避免因字型延遲載入產生畫面跳動。</li>
+        <li><strong>響應式中斷點</strong>：已針對 980px（側欄收合）、900px（雙欄轉單欄）與 640px（選單收合為漢堡選單）三個中斷點完成版面調整，涵蓋桌機、平板與手機三種常見瀏覽情境。</li>
+      </ul>
+
+      <h3>（二）網站介面流程與網站地圖</h3>
+      <p>依使用者角色劃分頁面動線，確保訪客、會員與工作人員各自僅接觸與其權限相符之操作介面：</p>
+      <ul class="sitemap">
+        <li>
+          <span class="tier-label">Public <span class="who">訪客瀏覽層</span></span>
+          <ul>
+            <li>首頁（品牌介紹、賽事宣傳、協會照片）<span class="path">/</span></li>
+            <li>賽事列表與賽事詳情<span class="path">/events</span></li>
+            <li>登入頁（Google／LINE／Facebook）<span class="path">/login</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="tier-label">Member <span class="who">會員操作層</span></span>
+          <ul>
+            <li>入會申請 / 續會<span class="path">/member/join, /member/renew</span></li>
+            <li>賽事報名表單（含即時資格驗證）<span class="path">/events/[slug]/register</span></li>
+            <li>繳費資料回填<span class="path">/member/payment</span></li>
+            <li>會員中心（會員卡、報名與付款紀錄、個人資料）<span class="path">/member</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="tier-label">Staff / Admin <span class="who">後台治理層</span></span>
+          <ul>
+            <li>經營儀表板<span class="path">/admin</span></li>
+            <li>會員／賽事／報名／公告管理<span class="path">/admin/members, /events, /registrations, /announcements</span></li>
+            <li>使用者權限管理（限 Admin）<span class="path">/admin/users</span></li>
+          </ul>
+        </li>
+      </ul>
+
+      <h3>（三）UI/UX 精進規劃</h3>
+      <ul class="plain">
+        <li><span class="pill">規劃中</span> <strong>統一設計系統文件</strong>：制定跨官網與後台之共用設計代幣（色彩、字級、間距、元件狀態），收斂現行雙視覺語彙之落差，並建立元件庫規範供後續開發依循。</li>
+        <li><span class="pill">規劃中</span> <strong>互動原型與可用性測試</strong>：以 Figma 建立正式互動原型，於重要功能（報名、繳費回填）上線前進行使用者測試，降低操作疑慮與客服負擔。</li>
+        <li><span class="pill">規劃中</span> <strong>無障礙檢核</strong>：依 WCAG 2.1 AA 標準檢視色彩對比、鍵盤可操作性與螢幕閱讀器相容性，提升不同族群會員之使用可及性。</li>
+      </ul>
+    </section>
+
     <section id="modules">
-      <h2><span class="no">五</span>功能模組規格</h2>
+      <h2><span class="no">六</span>功能模組規格</h2>
 
       <h3>（一）協會官網 <span class="tag">Public Site</span></h3>
       <p>提供首頁、關於協會、成立宗旨、賽事資訊與聯絡我們等公開頁面，供一般民眾與潛在會員瀏覽，並內建線上聯絡表單。</p>
@@ -711,10 +845,17 @@
         <li><strong>公告管理</strong>：發布與下架協會公告。</li>
         <li><strong>使用者權限管理</strong>：Admin 可調整帳號角色（Member／Staff／Admin）。</li>
       </ul>
+
+      <h3>（七）照片與影片上傳中心 <span class="tag">Media Upload</span> <span class="pill">規劃中</span></h3>
+      <p>
+        現行「協會照片」為固定於程式碼庫中之靜態圖片，需由工程人員手動更新，會員與工作人員均無法自行上傳。
+        規劃中之照片與影片上傳中心，將開放工作人員（後續評估開放會員）直接上傳賽事照片與精華影片，
+        經後台審核後自動發布於官網相簿與賽事花絮頁面，實作方式詳見第十二節「AWS 影音串流與檔案儲存建置規劃」。
+      </p>
     </section>
 
     <section id="data">
-      <h2><span class="no">六</span>資料庫設計</h2>
+      <h2><span class="no">七</span>資料庫設計</h2>
       <p class="lead">資料庫採正規化設計，以 Prisma Schema 定義並透過型別檢查確保存取一致性，核心資料表如下：</p>
       <div class="table-wrap">
         <table>
@@ -738,7 +879,7 @@
     </section>
 
     <section id="flows">
-      <h2><span class="no">七</span>關鍵作業流程</h2>
+      <h2><span class="no">八</span>關鍵作業流程</h2>
 
       <h3>（一）入會申請流程</h3>
       <div class="flow">
@@ -759,7 +900,7 @@
     </section>
 
     <section id="security">
-      <h2><span class="no">八</span>資安與隱私保護機制</h2>
+      <h2><span class="no">九</span>資安與隱私保護機制</h2>
       <ul class="plain">
         <li><strong>免自建密碼儲存</strong>：全面採用 OAuth 2.0 第三方登入（Google／LINE／Facebook），本系統不儲存任何使用者密碼。</li>
         <li><strong>角色權限控管</strong>：所有後台操作均於伺服器端驗證使用者角色（Member／Staff／Admin），未授權請求一律拒絕。</li>
@@ -772,7 +913,7 @@
     </section>
 
     <section id="nonfunc">
-      <h2><span class="no">九</span>技術規格與非功能需求</h2>
+      <h2><span class="no">十</span>技術規格與非功能需求</h2>
       <div class="table-wrap">
         <table>
           <thead><tr><th>構面</th><th>採用技術／規格</th><th>選型說明</th></tr></thead>
@@ -793,8 +934,76 @@
       </p>
     </section>
 
+    <section id="infra">
+      <h2><span class="no">十一</span>永久網域與基礎建設永續規劃</h2>
+      <p class="lead">
+        本節說明現行網域與主機架構之潛在風險，並提出使本系統長期穩定存續、不受單一人員或第三方平台異動影響之建置規劃。
+      </p>
+
+      <h3>（一）現況與風險盤點</h3>
+      <ul class="plain">
+        <li><strong>網域現況</strong>：系統現行網址為 <code>3v3.ek21.com</code>，屬第三方平台之子網域，網域註冊與管理權責未完全歸屬本會法人名下，存在因平台政策變動或帳號異動而影響官網存續之風險。</li>
+        <li><strong>對外 IP 現況</strong>：現行主機服務（Vercel）採全球邊緣網路（Edge Network）架構，依請求來源就近路由，不提供單一固定對外 IP。此為現代 Serverless 平台之常態設計，有利於自動擴展與抵禦流量攻擊，但無法滿足部分機關或金融單位要求「來源 IP 白名單」之介接情境。</li>
+      </ul>
+
+      <h3>（二）建置規劃</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="dot">1</div><div><h4>網域法人化</h4><p>以「社團法人中華台北羽球3對3發展協會」名義註冊正式頂層網域（建議 .org.tw 或 .tw），網域註冊人與付款帳戶均歸屬協會，避免因個人帳號或第三方平台異動而中斷服務。</p></div></div>
+        <div class="flow-step"><div class="dot">2</div><div><h4>DNS 雙路備援</h4><p>導入雙 DNS 服務（如註冊商 DNS ＋ Cloudflare）互為備援，降低單一 DNS 服務中斷造成全站無法連線之風險。</p></div></div>
+        <div class="flow-step"><div class="dot">3</div><div><h4>固定 IP 節點（視需求）</h4><p>僅針對確有固定來源 IP 需求之服務（如：影音串流入口、跨機關資料介接）於 AWS 建置具 Elastic IP 之獨立服務節點，與主網站（Vercel）分離部署，避免影響一般網頁瀏覽之高可用性。</p></div></div>
+        <div class="flow-step stop"><div class="dot">✓</div><div><h4>到期管理機制</h4><p>建立網域與 SSL 憑證到期提醒機制，並將網域年費、AWS 服務費用編列於協會常態年度預算，避免因人員異動導致網域或服務中斷。</p></div></div>
+      </div>
+    </section>
+
+    <section id="aws">
+      <h2><span class="no">十二</span>AWS影音串流與檔案儲存建置規劃</h2>
+      <p class="lead">
+        因應賽事規模擴大與「照片與影片上傳中心」功能需求，規劃導入 AWS 雲端服務作為影音與檔案之儲存、轉檔與傳遞骨幹，
+        取代現行將照片直接置於程式碼庫之作法。
+      </p>
+
+      <h3>（一）建置動機</h3>
+      <ul class="plain">
+        <li>現行協會照片為靜態圖片，直接置於程式碼庫 <code>public</code> 目錄中，需仰賴工程人員手動更新版本並重新部署，工作人員與會員均無法自行上傳或管理。</li>
+        <li>系統現有資料庫（Neon PostgreSQL）與主機（Vercel）均針對一般網頁資料設計，不適合直接儲存大型影片檔案或提供影音串流服務。</li>
+        <li>隨賽事規模擴大，本會規劃提供賽事精華影片、選手花絮與直播內容，需具備可承載大流量之影音儲存與傳輸架構。</li>
+      </ul>
+
+      <h3>（二）建置架構規劃</h3>
+      <div class="arch">
+        <div class="col">
+          <div class="col-title">上傳來源</div>
+          <div class="arch-box"><div class="t">後台管理介面</div><div class="d">工作人員上傳賽事照片／影片，填寫標題與所屬賽事</div></div>
+          <div class="arch-box"><div class="t">現場直播訊號（規劃評估）</div><div class="d">大型賽事現場攝影機推流至雲端直播服務</div></div>
+        </div>
+        <div class="col">
+          <div class="col-title">AWS 處理層</div>
+          <div class="arch-box accent"><div class="t">Amazon S3</div><div class="d">物件儲存主體，依類型分桶管理，設定生命週期政策轉入低成本封存</div></div>
+          <div class="arch-box accent"><div class="t">AWS Elemental MediaConvert</div><div class="d">影片上傳後自動轉檔為多解析度自適應串流（HLS）</div></div>
+          <div class="arch-box accent"><div class="t">AWS Lambda</div><div class="d">縮圖產生、轉檔觸發、上傳內容基本檢核之自動化作業</div></div>
+          <div class="arch-box accent"><div class="t">Amazon IVS／MediaLive<br />（規劃評估）</div><div class="d">大型賽事直播串流服務</div></div>
+        </div>
+        <div class="col">
+          <div class="col-title">傳遞與應用層</div>
+          <div class="arch-box"><div class="t">Amazon CloudFront</div><div class="d">全球內容傳遞網路，加速照片影片載入並降低頻寬成本</div></div>
+          <div class="arch-box"><div class="t">MediaAsset 資料表<br />（Prisma 新增）</div><div class="d">記錄檔案位置、上傳者、審核狀態與所屬賽事</div></div>
+          <div class="arch-box"><div class="t">官網相簿／賽事花絮頁</div><div class="d">動態讀取 MediaAsset，取代現行寫死於程式碼之靜態圖片</div></div>
+        </div>
+      </div>
+
+      <h3>（三）分階段建置排程</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="dot">1</div><div><h4>Phase 1・照片上傳與審核</h4><p>建置 S3 儲存與後台上傳／審核介面，取代靜態圖片，優先支援賽事照片管理。</p></div></div>
+        <div class="flow-step"><div class="dot">2</div><div><h4>Phase 2・影片上傳與轉檔</h4><p>整合 MediaConvert 自動轉檔與 CloudFront 傳遞，支援賽事精華影片上下架。</p></div></div>
+        <div class="flow-step stop"><div class="dot">3</div><div><h4>Phase 3・直播評估與上線</h4><p>評估導入 Amazon IVS／MediaLive，供大型賽事線上直播，並視第一、二階段成效決定上線時程。</p></div></div>
+      </div>
+      <div class="callout">
+        <p><strong>成本控管原則：</strong>AWS 服務採依用量計費，透過生命週期政策將久遠賽事影片自動轉入低成本封存儲存（S3 Glacier），並以 CloudFront 快取降低重複請求之來源流量，控制年度雲端服務支出。</p>
+      </div>
+    </section>
+
     <section id="benefits">
-      <h2><span class="no">十</span>預期效益與衡量指標</h2>
+      <h2><span class="no">十三</span>預期效益與衡量指標</h2>
       <p class="lead">系統上線後，本會將以下列面向作為導入成效之觀察指標：</p>
       <div class="table-wrap">
         <table>
@@ -811,8 +1020,10 @@
     </section>
 
     <section id="roadmap">
-      <h2><span class="no">十一</span>未來發展規劃</h2>
+      <h2><span class="no">十四</span>未來發展規劃</h2>
       <ol class="plain">
+        <li><strong>照片與影片上傳中心</strong>：依第十二節建置規劃分階段導入 AWS 儲存與轉檔架構，開放工作人員自行上傳並管理賽事照片與影片。</li>
+        <li><strong>網域法人化與固定 IP 節點</strong>：依第十一節規劃完成網域法人化移轉，並視影音串流需求建置固定 IP 服務節點。</li>
         <li><strong>自動化通知機制</strong>：整合電子郵件服務，於報名成立、繳費確認、會籍到期前自動通知會員。</li>
         <li><strong>第三方金流整合評估</strong>：視營運規模成長，評估導入信用卡／行動支付以降低人工核帳負擔。</li>
         <li><strong>賽程與成績管理模組</strong>：擴充對戰表編排、即時比分與成績公告功能。</li>
@@ -821,7 +1032,7 @@
     </section>
 
     <section id="appendix">
-      <h2><span class="no">十二</span>附錄</h2>
+      <h2><span class="no">十五</span>附錄</h2>
 
       <h3>（一）報名費用試算規則</h3>
       <div class="table-wrap">
@@ -844,6 +1055,9 @@
             <tr><td class="emph">3P</td><td>3人一隊（Triple）之賽制簡稱，本會賽事均以三人隊伍形式進行</td></tr>
             <tr><td class="emph">孤立會員（Orphan Member）</td><td>由賽事報名流程建立、尚未與登入帳號連結之會員資料，可由本人以身分證字號認領</td></tr>
             <tr><td class="emph">末5碼驗證</td><td>會員填寫銀行轉帳帳號末5碼與轉帳日期，供工作人員比對銀行明細之低成本金流核對方式</td></tr>
+            <tr><td class="emph">Elastic IP</td><td>AWS 提供之靜態公有 IP 位址，可獨立於單一主機生命週期之外，供需固定來源 IP 之服務介接使用</td></tr>
+            <tr><td class="emph">HLS 自適應串流</td><td>HTTP Live Streaming，將影片轉為多種畫質切片，依使用者網路狀況自動切換，降低影片播放中斷</td></tr>
+            <tr><td class="emph">MediaAsset</td><td>規劃新增之媒體資產資料表，記錄照片／影片於 AWS S3 之儲存位置、上傳者、審核狀態與所屬賽事</td></tr>
           </tbody>
         </table>
       </div>
@@ -851,7 +1065,7 @@
 
     <footer class="doc-end">
       <span>社團法人中華台北羽球3對3發展協會 · 會員暨賽事管理資訊系統</span>
-      <span>System Specification · Rev. 1.0 · 2026-07</span>
+      <span>System Specification · Rev. 1.1 · 2026-07</span>
     </footer>
   </main>
 </div>
