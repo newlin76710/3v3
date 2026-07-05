@@ -1,0 +1,857 @@
+<title>會員暨賽事管理資訊系統｜系統規格書</title>
+<style>
+  :root {
+    --paper: #f6f7f5;
+    --paper-raise: #ffffff;
+    --ink: #16241f;
+    --ink-soft: #2c3a34;
+    --muted: #5b6b63;
+    --line: #d8ded9;
+    --line-strong: #b9c4bd;
+    --accent: #146356;
+    --accent-ink: #ffffff;
+    --accent-2: #a8711f;
+    --accent-2-soft: #f3e6d0;
+    --code-bg: #eef1ee;
+    --shadow: 0 1px 2px rgba(20, 30, 25, 0.06), 0 8px 24px rgba(20, 30, 25, 0.05);
+
+    --font-display: "Noto Serif TC", "Iowan Old Style", "Source Han Serif TC", Georgia, serif;
+    --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Hiragino Sans", -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #101613;
+      --paper-raise: #16201b;
+      --ink: #e9edea;
+      --ink-soft: #cdd8d1;
+      --muted: #93a49b;
+      --line: #29342d;
+      --line-strong: #3a473f;
+      --accent: #4fb79b;
+      --accent-ink: #08221b;
+      --accent-2: #e0ab5c;
+      --accent-2-soft: #3a2f1c;
+      --code-bg: #182019;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #101613;
+    --paper-raise: #16201b;
+    --ink: #e9edea;
+    --ink-soft: #cdd8d1;
+    --muted: #93a49b;
+    --line: #29342d;
+    --line-strong: #3a473f;
+    --accent: #4fb79b;
+    --accent-ink: #08221b;
+    --accent-2: #e0ab5c;
+    --accent-2-soft: #3a2f1c;
+    --code-bg: #182019;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  :root[data-theme="light"] {
+    --paper: #f6f7f5;
+    --paper-raise: #ffffff;
+    --ink: #16241f;
+    --ink-soft: #2c3a34;
+    --muted: #5b6b63;
+    --line: #d8ded9;
+    --line-strong: #b9c4bd;
+    --accent: #146356;
+    --accent-ink: #ffffff;
+    --accent-2: #a8711f;
+    --accent-2-soft: #f3e6d0;
+    --code-bg: #eef1ee;
+    --shadow: 0 1px 2px rgba(20, 30, 25, 0.06), 0 8px 24px rgba(20, 30, 25, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent); color: var(--accent-ink); }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Sidebar / TOC ---------- */
+  .toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 40px 20px 40px 32px;
+    border-right: 1px solid var(--line);
+  }
+  .toc-mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .toc-badge {
+    width: 34px; height: 34px; border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+  }
+  .toc-mark small {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+  .toc nav ol {
+    list-style: none;
+    margin: 0; padding: 0;
+    counter-reset: toc;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .toc nav a {
+    counter-increment: toc;
+    display: flex;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    padding: 6px 8px;
+    border-radius: 6px;
+  }
+  .toc nav a::before {
+    content: counter(toc, cjk-ideographic) "、";
+    font-family: var(--font-display);
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .toc nav a:hover { background: var(--paper-raise); color: var(--accent); }
+  .toc-foot {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 11.5px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    line-height: 1.9;
+  }
+
+  .toc-toggle { display: none; }
+
+  /* ---------- Main column ---------- */
+  main { min-width: 0; padding: 0 56px 120px; }
+
+  .cover {
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 48px;
+  }
+  .cover .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .cover .eyebrow::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: var(--accent);
+  }
+  .cover h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.35;
+    margin: 0 0 14px;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+  .cover .sub {
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 56ch;
+    margin: 0 0 32px;
+  }
+  .doc-meta {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--paper-raise);
+    box-shadow: var(--shadow);
+  }
+  .doc-meta div {
+    padding: 14px 18px;
+    border-right: 1px solid var(--line);
+  }
+  .doc-meta div:last-child { border-right: none; }
+  .doc-meta dt {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .doc-meta dd { margin: 0; font-size: 14.5px; font-weight: 600; }
+
+  section { margin-bottom: 64px; scroll-margin-top: 28px; }
+  section > h2 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 600;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 22px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--ink);
+  }
+  section > h2 .no {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--accent-ink);
+    background: var(--accent);
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+    margin: 34px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h3 .tag {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  p { max-width: 72ch; color: var(--ink-soft); }
+  p.lead { font-size: 17px; color: var(--ink); max-width: 68ch; }
+  ul.plain, ol.plain { max-width: 72ch; color: var(--ink-soft); padding-left: 1.3em; }
+  ul.plain li, ol.plain li { margin-bottom: 6px; }
+  strong { color: var(--ink); font-weight: 700; }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, var(--paper-raise));
+    padding: 16px 20px;
+    border-radius: 0 10px 10px 0;
+    max-width: 72ch;
+    margin: 18px 0;
+  }
+  .callout p { margin: 0; color: var(--ink-soft); }
+  .callout p + p { margin-top: 8px; }
+
+  /* ---------- Tables ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin: 18px 0 28px;
+    box-shadow: var(--shadow);
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 560px;
+    background: var(--paper-raise);
+    font-size: 14.5px;
+  }
+  thead th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--code-bg);
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line-strong);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    color: var(--ink-soft);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.emph, td strong { color: var(--ink); }
+  td.num, th.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+  .pill {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--accent-2-soft);
+    color: var(--accent-2);
+    font-weight: 700;
+  }
+  .pill.green { background: color-mix(in srgb, var(--accent) 16%, var(--paper-raise)); color: var(--accent); }
+
+  /* ---------- Architecture diagram ---------- */
+  .arch {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0 18px;
+    align-items: stretch;
+    margin: 26px 0 10px;
+  }
+  .arch .col { display: flex; flex-direction: column; gap: 14px; position: relative; }
+  .arch .col-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 2px;
+  }
+  .arch-box {
+    background: var(--paper-raise);
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    padding: 14px 14px;
+    box-shadow: var(--shadow);
+  }
+  .arch-box .t { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+  .arch-box .d { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .arch-box.accent { border-color: var(--accent); }
+  .arch-box.accent .t { color: var(--accent); }
+  .arrow-row {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 18px;
+    height: 22px;
+  }
+  .arch .connector {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--line-strong);
+    font-size: 22px;
+  }
+
+  /* ---------- Flow steps ---------- */
+  .flow { max-width: 72ch; margin: 18px 0 8px; }
+  .flow-step {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 14px;
+    padding-bottom: 20px;
+    position: relative;
+  }
+  .flow-step:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    left: 14px; top: 30px; bottom: 0;
+    width: 1px;
+    background: var(--line-strong);
+  }
+  .flow-step .dot {
+    width: 30px; height: 30px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    z-index: 1;
+  }
+  .flow-step.stop .dot { background: var(--accent-2); color: #fff; }
+  .flow-step h4 { margin: 2px 0 4px; font-size: 15px; }
+  .flow-step p { margin: 0; font-size: 14px; color: var(--muted); }
+
+  /* ---------- Roles grid ---------- */
+  .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 20px 0; }
+  .role-card {
+    background: var(--paper-raise);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .role-card .who { font-family: var(--font-mono); font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; }
+  .role-card h4 { margin: 6px 0 8px; font-size: 16px; }
+  .role-card ul { margin: 0; padding-left: 1.1em; font-size: 13.5px; color: var(--muted); }
+  .role-card li { margin-bottom: 4px; }
+
+  footer.doc-end {
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+    margin-top: 40px;
+    font-size: 12.5px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 980px) {
+    .shell { grid-template-columns: 1fr; }
+    .toc {
+      position: relative;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      padding: 20px 20px;
+    }
+    .toc nav { display: none; }
+    .toc.open nav { display: block; }
+    .toc-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      background: var(--paper-raise);
+      border: 1px solid var(--line-strong);
+      color: var(--ink);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .toc-mark { margin-bottom: 0; }
+    .toc-head-row { display: flex; align-items: center; }
+    .toc nav { margin-top: 18px; }
+    main { padding: 0 20px 80px; }
+    .cover { padding: 40px 0 32px; }
+    .doc-meta { grid-template-columns: repeat(2, 1fr); }
+    .arch { grid-template-columns: 1fr; }
+    .roles { grid-template-columns: 1fr; }
+  }
+
+  @media print {
+    .toc { display: none; }
+    .shell { display: block; }
+    main { padding: 0; max-width: 100%; }
+    body { background: #fff; color: #000; }
+    section { break-inside: avoid-page; margin-bottom: 34px; }
+    .table-wrap, .role-card, .arch-box, .callout { box-shadow: none; }
+    a { color: inherit; text-decoration: none; }
+  }
+</style>
+
+<div class="shell">
+  <aside class="toc" id="toc">
+    <div class="toc-head-row">
+      <div class="toc-mark">
+        <div class="toc-badge">3v3</div>
+        <div>
+          <small>System Spec · v1.0</small>
+        </div>
+      </div>
+      <button class="toc-toggle" onclick="document.getElementById('toc').classList.toggle('open')" type="button" aria-expanded="false" aria-controls="toc">
+        目錄 ▾
+      </button>
+    </div>
+    <nav aria-label="文件目錄">
+      <ol>
+        <li><a href="#bg">專案背景與目的</a></li>
+        <li><a href="#goals">系統目標與預期效益</a></li>
+        <li><a href="#users">使用對象與角色</a></li>
+        <li><a href="#arch">系統架構</a></li>
+        <li><a href="#modules">功能模組規格</a></li>
+        <li><a href="#data">資料庫設計</a></li>
+        <li><a href="#flows">關鍵作業流程</a></li>
+        <li><a href="#security">資安與隱私保護</a></li>
+        <li><a href="#nonfunc">技術規格與非功能需求</a></li>
+        <li><a href="#benefits">預期效益與衡量指標</a></li>
+        <li><a href="#roadmap">未來發展規劃</a></li>
+        <li><a href="#appendix">附錄</a></li>
+      </ol>
+    </nav>
+    <div class="toc-foot">
+      社團法人中華台北羽球3對3發展協會<br />
+      System Specification Document<br />
+      Rev. 1.0 — 2026-07
+    </div>
+  </aside>
+
+  <main>
+    <div class="cover">
+      <p class="eyebrow">政府補助申請附件 · 系統規格書</p>
+      <h1>會員暨賽事管理資訊系統<br />系統規格書</h1>
+      <p class="sub">
+        社團法人中華台北羽球3對3發展協會為推動全國性羽球3對3運動之組織化發展，
+        自行建置線上會員暨賽事管理平台，整合會員申請、賽事報名、繳費核對與後台治理，
+        取代現行人工紙本作業。本文件說明系統目的、架構、功能規格與資料治理方式，
+        供申請本會體育運動發展相關政府補助經費之技術佐證文件。
+      </p>
+      <dl class="doc-meta">
+        <div><dt>系統名稱</dt><dd>會員暨賽事管理資訊系統</dd></div>
+        <div><dt>主管單位</dt><dd>內政部（全國性人民團體）</dd></div>
+        <div><dt>文件版本</dt><dd>v1.0</dd></div>
+        <div><dt>發布日期</dt><dd>2026 年 7 月</dd></div>
+      </dl>
+    </div>
+
+    <section id="bg">
+      <h2><span class="no">一</span>專案背景與目的</h2>
+      <p class="lead">
+        本會為全國性人民團體，以推廣羽球3對3運動、辦理全國性錦標賽事、發展會員組織為宗旨。
+        隨著會員人數與賽事規模逐年成長，原以人工表單、Excel 與 LINE 群組彙整的會務作業方式，
+        已難以負荷報名資格審核、費用計算與繳費核對之工作量，亦缺乏可稽核之數位紀錄。
+      </p>
+      <p>
+        有鑑於此，本會自行規劃並開發「會員暨賽事管理資訊系統」，將入會申請、賽事報名、
+        費用試算、匯款核對與會籍管理等流程全面線上化，並建立具權限分級之後台管理機制，
+        使幹部得以即時掌握會務與財務狀況，降低人為疏漏，提升行政透明度與服務效率。
+        本系統已於本會官方網站正式上線運作，並將作為
+        <strong>2026 年 12 月 20 日「第一屆中華盃全國羽球3對3錦標賽」</strong>
+        之官方報名與會籍管理平台。
+      </p>
+    </section>
+
+    <section id="goals">
+      <h2><span class="no">二</span>系統目標與預期效益</h2>
+      <p class="lead">建置本系統之核心目標，在於以最低之外部服務成本，達成會務與賽務作業之全面數位化：</p>
+      <ul class="plain">
+        <li><strong>單一入口整合</strong>：官網、會員系統、賽事報名、繳費核對、後台治理共用同一資料庫，避免多平台資料不一致。</li>
+        <li><strong>自動化資格與費用計算</strong>：依會員資格、年齡、性別組合自動驗證報名資格並試算應繳金額，取代人工核對。</li>
+        <li><strong>可稽核之金流紀錄</strong>：所有繳費均以銀行轉帳＋末5碼比對方式留下數位紀錄，並可於後台匯出報表。</li>
+        <li><strong>組織治理透明化</strong>：後台儀表板即時呈現會員數、當日報名、待確認款項與累計收入，支援理監事會報告。</li>
+      </ul>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>作業項目</th><th>導入前（人工作業）</th><th>導入後（系統化）</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="emph">入會申請</td>
+              <td>紙本表單或 LINE 傳送個資，人工登錄 Excel</td>
+              <td>線上表單即時建檔，身分證格式與重複性自動檢核</td>
+            </tr>
+            <tr>
+              <td class="emph">賽事報名</td>
+              <td>人工核對隊伍性別／年齡組合與名額，容易超收或誤判</td>
+              <td>系統即時計算年齡、性別組合與各組別名額，額滿自動關閉</td>
+            </tr>
+            <tr>
+              <td class="emph">費用計算</td>
+              <td>依會員別人工試算，易因規則調整而算錯</td>
+              <td>依會員資格與跨組報名狀態自動試算，全隊金額即時呈現</td>
+            </tr>
+            <tr>
+              <td class="emph">繳費核對</td>
+              <td>對帳戶交易明細與報名表逐筆人工比對</td>
+              <td>會員填寫末5碼與轉帳日期，後台一鍵確認並自動更新狀態</td>
+            </tr>
+            <tr>
+              <td class="emph">會務統計</td>
+              <td>賽前彙整 Excel 才能得知報名與收款狀況</td>
+              <td>後台儀表板即時顯示會員數、報名數、待審核與總收入</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="users">
+      <h2><span class="no">三</span>使用對象與角色</h2>
+      <p class="lead">系統依 <code>Role</code> 欄位劃分三種權限角色，並以伺服器端驗證確保跨角色資料存取安全：</p>
+      <div class="roles">
+        <div class="role-card">
+          <span class="who">Member</span>
+          <h4>一般會員 / 選手</h4>
+          <ul>
+            <li>以 Google／LINE／Facebook 第三方帳號登入</li>
+            <li>申請入會、續會、編輯個人資料</li>
+            <li>賽事報名、查詢報名與繳費紀錄</li>
+          </ul>
+        </div>
+        <div class="role-card">
+          <span class="who">Staff</span>
+          <h4>協會工作人員</h4>
+          <ul>
+            <li>審核會員與報名繳費</li>
+            <li>維護賽事、組別與公告內容</li>
+            <li>匯出報名與財務相關報表</li>
+          </ul>
+        </div>
+        <div class="role-card">
+          <span class="who">Admin</span>
+          <h4>系統管理者（理監事 / 秘書處）</h4>
+          <ul>
+            <li>Staff 之全部權限</li>
+            <li>使用者角色授權與帳號治理</li>
+            <li>檢視整體儀表板與經營指標</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="arch">
+      <h2><span class="no">四</span>系統架構</h2>
+      <p class="lead">
+        本系統採用 Serverless 架構部署於 Vercel，前後端邏輯統一以 Next.js App Router 撰寫，
+        資料庫採用具自動備份能力之 Neon PostgreSQL，並透過 Auth.js 委託第三方平台完成身分驗證，
+        本會伺服器不儲存任何使用者密碼。
+      </p>
+
+      <div class="arch">
+        <div class="col">
+          <div class="col-title">使用者端</div>
+          <div class="arch-box"><div class="t">會員 / 選手瀏覽器</div><div class="d">官網、報名表單、會員中心（RWD 響應式）</div></div>
+          <div class="arch-box"><div class="t">協會工作人員瀏覽器</div><div class="d">後台管理介面（權限分級）</div></div>
+          <div class="arch-box"><div class="t">Google／LINE／Facebook</div><div class="d">OAuth 第三方身分驗證提供者</div></div>
+        </div>
+        <div class="col">
+          <div class="col-title">應用層 · Vercel</div>
+          <div class="arch-box accent"><div class="t">Next.js App Router</div><div class="d">頁面渲染、路由、表單驗證（Zod）</div></div>
+          <div class="arch-box accent"><div class="t">Server Actions</div><div class="d">會員 / 報名 / 金流 / 後台治理商業邏輯</div></div>
+          <div class="arch-box accent"><div class="t">Auth.js v5</div><div class="d">Session 管理、角色授權中介層</div></div>
+        </div>
+        <div class="col">
+          <div class="col-title">資料與紀錄層</div>
+          <div class="arch-box"><div class="t">Neon PostgreSQL</div><div class="d">會員、賽事、報名、金流、公告等核心資料</div></div>
+          <div class="arch-box"><div class="t">Prisma ORM</div><div class="d">型別安全查詢與交易（Transaction）控制</div></div>
+          <div class="arch-box"><div class="t">銀行帳戶（人工比對）</div><div class="d">實體收款帳戶，比對末5碼與轉帳日期</div></div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:4px;">
+        圖示說明：使用者端請求經 Vercel Edge 導向 Next.js 應用層；Server Actions 以 Prisma 交易方式讀寫 Neon 資料庫，確保報名、金流與會籍狀態同步更新不產生資料不一致。
+      </p>
+    </section>
+
+    <section id="modules">
+      <h2><span class="no">五</span>功能模組規格</h2>
+
+      <h3>（一）協會官網 <span class="tag">Public Site</span></h3>
+      <p>提供首頁、關於協會、成立宗旨、賽事資訊與聯絡我們等公開頁面，供一般民眾與潛在會員瀏覽，並內建線上聯絡表單。</p>
+
+      <h3>（二）會員系統 <span class="tag">Membership</span></h3>
+      <ul class="plain">
+        <li>支援 Google／LINE／Facebook 第三方登入，免自建密碼儲存機制。</li>
+        <li>入會申請採「銀行轉帳＋末5碼驗證」，避免串接第三方金流之額外手續費成本。</li>
+        <li>身分證字號格式與檢查碼即時驗證，且設有<strong>一次性修改鎖定</strong>機制，防止重複冒用他人資料。</li>
+        <li>會籍到期自動判斷，逾期提示續會；支援孤立會員資料（由報名流程建立）與使用者帳號之自動配對認領。</li>
+      </ul>
+
+      <h3>（三）賽事報名系統 <span class="tag">Registration</span></h3>
+      <ul class="plain">
+        <li>固定三人一隊，系統依出生日期即時計算年齡（不接受人工輸入年齡），並依組別驗證總年齡與個人最低年齡門檻。</li>
+        <li>依組別自動限制性別組合（男子3P／女子3P／混合3P）與各組別名額，額滿自動關閉報名。</li>
+        <li>依會員資格別（有效會員／新加入會員／非會員）自動計算應繳費用，並偵測同一選手跨組報名之「第2項」優惠試算。</li>
+        <li>報名同時完成之健康與安全同意書電子簽署，留存數位紀錄。</li>
+      </ul>
+
+      <h3>（四）繳費與金流核對 <span class="tag">Payment Verification</span></h3>
+      <p>
+        因應中小型體育團體之營運成本考量，系統不串接第三方金流服務，改採<strong>銀行轉帳＋匯款末5碼、轉帳日期回填</strong>之驗證機制：
+        會員完成轉帳後於系統登錄末5碼，工作人員於後台比對銀行明細後一鍵確認，系統自動更新會籍與報名之付款狀態，並同步啟用相應之會員資格。
+      </p>
+
+      <h3>（五）會員中心 <span class="tag">Member Dashboard</span></h3>
+      <p>提供數位會員卡（會員編號、到期日）、報名紀錄、付款紀錄與個人資料維護；系統會自動辨識入會費是否已併入賽事報名費用中，避免會員重複繳費之疑慮。</p>
+
+      <h3>（六）後台管理系統 <span class="tag">Admin Console</span></h3>
+      <ul class="plain">
+        <li><strong>經營儀表板</strong>：會員總數、有效會員數、當日報名數、待確認款項、累計實收金額。</li>
+        <li><strong>會員管理</strong>：搜尋、人工建檔、資料修正、繳費確認與續會處理。</li>
+        <li><strong>賽事與組別管理</strong>：建立賽事、設定組別年齡／性別／名額規則。</li>
+        <li><strong>報名管理</strong>：報名資料編輯、繳費確認、取消報名，並支援 <span class="pill">Excel 匯出</span> 供現場檢錄與財務對帳使用。</li>
+        <li><strong>公告管理</strong>：發布與下架協會公告。</li>
+        <li><strong>使用者權限管理</strong>：Admin 可調整帳號角色（Member／Staff／Admin）。</li>
+      </ul>
+    </section>
+
+    <section id="data">
+      <h2><span class="no">六</span>資料庫設計</h2>
+      <p class="lead">資料庫採正規化設計，以 Prisma Schema 定義並透過型別檢查確保存取一致性，核心資料表如下：</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>資料表</th><th>說明</th><th>關聯</th></tr></thead>
+          <tbody>
+            <tr><td class="emph"><code>User</code></td><td>登入帳號與個人資料草稿（第三方登入建立）</td><td>1–1 對應 Member；1–N 對應 Registration</td></tr>
+            <tr><td class="emph"><code>Account / Session</code></td><td>Auth.js 標準資料表，儲存 OAuth 連結與登入階段</td><td>N–1 對應 User</td></tr>
+            <tr><td class="emph"><code>Member</code></td><td>協會會員資料、會籍狀態與到期日</td><td>0–1 對應 User；1–N 對應 Payment</td></tr>
+            <tr><td class="emph"><code>Event</code></td><td>賽事基本資料、報名起訖時間</td><td>1–N 對應 EventGroup / Registration</td></tr>
+            <tr><td class="emph"><code>EventGroup</code></td><td>賽事組別（年齡／性別／名額規則）</td><td>N–1 對應 Event；1–N 對應 Registration</td></tr>
+            <tr><td class="emph"><code>Registration</code></td><td>隊伍報名紀錄與付款狀態</td><td>N–1 對應 Event / EventGroup；1–N 對應 RegistrationPlayer / Payment</td></tr>
+            <tr><td class="emph"><code>RegistrationPlayer</code></td><td>個別選手資料、會員資格別與應繳費用</td><td>N–1 對應 Registration</td></tr>
+            <tr><td class="emph"><code>Payment</code></td><td>金流交易紀錄（入會費／報名費／續會費）</td><td>N–1 對應 Member 或 Registration</td></tr>
+            <tr><td class="emph"><code>Announcement</code></td><td>協會公告內容與發布狀態</td><td>N–1 對應 User（作者）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <p><strong>資料治理設計重點：</strong>報名建立、繳費確認與取消報名皆以資料庫交易（Transaction）方式處理，確保「報名金額」「付款狀態」「會籍啟用」三者同步更新，避免因單一步驟失敗造成資料不一致。</p>
+      </div>
+    </section>
+
+    <section id="flows">
+      <h2><span class="no">七</span>關鍵作業流程</h2>
+
+      <h3>（一）入會申請流程</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="dot">1</div><div><h4>第三方帳號登入</h4><p>會員以 Google／LINE／Facebook 登入本系統。</p></div></div>
+        <div class="flow-step"><div class="dot">2</div><div><h4>填寫入會申請</h4><p>填寫真實姓名、身分證字號、生日、聯絡方式，系統即時驗證格式與重複性。</p></div></div>
+        <div class="flow-step"><div class="dot">3</div><div><h4>匯款並回填末5碼</h4><p>會員依系統提示轉帳年費，並登錄轉帳日期與帳號末5碼。</p></div></div>
+        <div class="flow-step stop"><div class="dot">✓</div><div><h4>後台審核啟用</h4><p>工作人員核對銀行明細後於後台確認，系統自動啟用會籍並設定到期日。</p></div></div>
+      </div>
+
+      <h3>（二）賽事報名與繳費流程</h3>
+      <div class="flow">
+        <div class="flow-step"><div class="dot">1</div><div><h4>選擇賽事與組別</h4><p>系統依報名起訖時間與名額狀態顯示可報名組別。</p></div></div>
+        <div class="flow-step"><div class="dot">2</div><div><h4>填寫隊伍與選手資料</h4><p>三位選手資料、會員資格別即時驗證，系統同步試算全隊應繳金額。</p></div></div>
+        <div class="flow-step"><div class="dot">3</div><div><h4>簽署同意書並送出</h4><p>完成健康與安全同意書電子簽署後送出報名，系統建立報名與待繳款紀錄。</p></div></div>
+        <div class="flow-step"><div class="dot">4</div><div><h4>匯款並回填資料</h4><p>依系統顯示金額轉帳，並回填末5碼與轉帳日期。</p></div></div>
+        <div class="flow-step stop"><div class="dot">✓</div><div><h4>後台確認並啟用</h4><p>工作人員確認款項到帳，系統同步更新報名狀態，並為「新加入會員」選手啟用會籍。</p></div></div>
+      </div>
+    </section>
+
+    <section id="security">
+      <h2><span class="no">八</span>資安與隱私保護機制</h2>
+      <ul class="plain">
+        <li><strong>免自建密碼儲存</strong>：全面採用 OAuth 2.0 第三方登入（Google／LINE／Facebook），本系統不儲存任何使用者密碼。</li>
+        <li><strong>角色權限控管</strong>：所有後台操作均於伺服器端驗證使用者角色（Member／Staff／Admin），未授權請求一律拒絕。</li>
+        <li><strong>個資最小化蒐集</strong>：僅蒐集辦理會籍與賽事報名所必要之姓名、身分證字號、生日、聯絡方式等資料。</li>
+        <li><strong>身分證字號防濫用機制</strong>：格式與檢查碼驗證、同賽事重複報名上限管制，並限制身分證字號僅能修改一次。</li>
+        <li><strong>伺服器端表單驗證</strong>：所有輸入均以 Zod 進行伺服器端二次驗證，避免前端繞過造成之資料異常。</li>
+        <li><strong>資料庫交易一致性</strong>：金流相關操作採資料庫交易處理，防止部分寫入失敗導致金額或會籍狀態錯誤。</li>
+        <li><strong>傳輸安全</strong>：全站透過 Vercel 平台以 HTTPS 加密傳輸，資料庫連線採用 Neon 加密連線。</li>
+      </ul>
+    </section>
+
+    <section id="nonfunc">
+      <h2><span class="no">九</span>技術規格與非功能需求</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>構面</th><th>採用技術／規格</th><th>選型說明</th></tr></thead>
+          <tbody>
+            <tr><td class="emph">前端框架</td><td>Next.js 15（App Router）＋ React 19＋ TypeScript</td><td>型別安全、SEO 友善之伺服器渲染</td></tr>
+            <tr><td class="emph">介面樣式</td><td>Tailwind CSS＋shadcn/ui</td><td>一致之視覺元件庫，加速跨頁面開發</td></tr>
+            <tr><td class="emph">後端邏輯</td><td>Next.js Server Actions</td><td>免額外架設 API 伺服器，降低維運複雜度</td></tr>
+            <tr><td class="emph">資料庫</td><td>Neon Serverless PostgreSQL ＋ Prisma 7 ORM</td><td>自動備份、依用量計費，適合中小型組織</td></tr>
+            <tr><td class="emph">身分驗證</td><td>Auth.js v5（Google／LINE／Facebook）</td><td>覆蓋台灣使用者常用登入方式</td></tr>
+            <tr><td class="emph">部署與代管</td><td>Vercel（Serverless／全球 CDN）</td><td>免自建主機，具備高可用性與自動擴展能力</td></tr>
+            <tr><td class="emph">報表匯出</td><td>xlsx（Excel 匯出）</td><td>供現場檢錄與理監事會財務對帳使用</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        系統採無伺服器（Serverless）架構，可隨報名尖峰時段之流量自動擴展，無需本會自行採購或維運實體伺服器，
+        亦大幅降低系統上線後之年度維運成本。
+      </p>
+    </section>
+
+    <section id="benefits">
+      <h2><span class="no">十</span>預期效益與衡量指標</h2>
+      <p class="lead">系統上線後，本會將以下列面向作為導入成效之觀察指標：</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>指標構面</th><th>衡量方式</th></tr></thead>
+          <tbody>
+            <tr><td class="emph">行政效率</td><td>單筆報名／入會自建檔至完成審核之平均處理時間</td></tr>
+            <tr><td class="emph">資料正確性</td><td>因人工計算錯誤導致之報名費用更正次數</td></tr>
+            <tr><td class="emph">財務透明度</td><td>理監事會可即時調閱之收支報表完整度與頻率</td></tr>
+            <tr><td class="emph">會員成長</td><td>系統上線後新入會人數與續會率</td></tr>
+            <tr><td class="emph">賽事規模</td><td>系統支援之單場賽事最大報名隊伍數與組別數</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="roadmap">
+      <h2><span class="no">十一</span>未來發展規劃</h2>
+      <ol class="plain">
+        <li><strong>自動化通知機制</strong>：整合電子郵件服務，於報名成立、繳費確認、會籍到期前自動通知會員。</li>
+        <li><strong>第三方金流整合評估</strong>：視營運規模成長，評估導入信用卡／行動支付以降低人工核帳負擔。</li>
+        <li><strong>賽程與成績管理模組</strong>：擴充對戰表編排、即時比分與成績公告功能。</li>
+        <li><strong>行動裝置體驗優化</strong>：持續優化現場報到、檢錄情境下之行動裝置操作流程。</li>
+      </ol>
+    </section>
+
+    <section id="appendix">
+      <h2><span class="no">十二</span>附錄</h2>
+
+      <h3>（一）報名費用試算規則</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>會員資格</th><th class="num">費用</th><th>說明</th></tr></thead>
+          <tbody>
+            <tr><td class="emph">有效協會會員</td><td class="num">NT$ 200</td><td>固定金額，不因跨組報名項數而增加</td></tr>
+            <tr><td class="emph">新加入會員</td><td class="num">NT$ 700</td><td>年費 500 元＋報名費 200 元，一次性合併收取</td></tr>
+            <tr><td class="emph">非會員（第1項）</td><td class="num">NT$ 450</td><td>單一組別報名</td></tr>
+            <tr><td class="emph">非會員（第2項）</td><td class="num">NT$ 450</td><td>同一選手跨組報名之第2組別，累計 NT$ 900</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>（二）名詞解釋</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>名詞</th><th>說明</th></tr></thead>
+          <tbody>
+            <tr><td class="emph">3P</td><td>3人一隊（Triple）之賽制簡稱，本會賽事均以三人隊伍形式進行</td></tr>
+            <tr><td class="emph">孤立會員（Orphan Member）</td><td>由賽事報名流程建立、尚未與登入帳號連結之會員資料，可由本人以身分證字號認領</td></tr>
+            <tr><td class="emph">末5碼驗證</td><td>會員填寫銀行轉帳帳號末5碼與轉帳日期，供工作人員比對銀行明細之低成本金流核對方式</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer class="doc-end">
+      <span>社團法人中華台北羽球3對3發展協會 · 會員暨賽事管理資訊系統</span>
+      <span>System Specification · Rev. 1.0 · 2026-07</span>
+    </footer>
+  </main>
+</div>
