@@ -64,11 +64,12 @@ model User {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
-  member        Member?
-  accounts      Account[]
-  sessions      Session[]
-  registrations Registration[]
-  announcements Announcement[]
+  member          Member?
+  accounts        Account[]
+  sessions        Session[]
+  registrations   Registration[]
+  announcements   Announcement[]
+  emailBroadcasts EmailBroadcast[]
 }
 
 model Account {
@@ -255,4 +256,33 @@ model Announcement {
   updatedAt   DateTime @updatedAt
 
   author User? @relation(fields: [authorId], references: [id])
+}
+
+// ==================== EMAIL BROADCAST ====================
+
+enum EmailAudienceScope {
+  ALL          // 網站會員 + 尚未認領帳號的入會申請資料
+  USERS_ONLY   // 僅限已註冊的網站會員
+}
+
+enum EmailAudienceSegment {
+  EVERYONE          // 不篩選
+  ASSOCIATION_MEMBER // 協會會員（有入會申請資料）
+  PAID              // 已繳費
+  UNPAID            // 未繳費
+  REGISTERED        // 已報名賽事
+  NOT_REGISTERED    // 未報名賽事
+}
+
+model EmailBroadcast {
+  id             String               @id @default(cuid())
+  subject        String
+  content        String
+  scope          EmailAudienceScope
+  segment        EmailAudienceSegment
+  recipientCount Int
+  sentById       String?
+  createdAt      DateTime             @default(now())
+
+  sentBy User? @relation(fields: [sentById], references: [id])
 }

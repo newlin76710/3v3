@@ -402,9 +402,17 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                           <div className="text-right shrink-0">
                             <p className="font-bold text-lg text-gray-900">{formatCurrency(reg.totalAmount)}</p>
                             {reg.paymentStatus === "PENDING" && (
-                              <Link href={`/member/payment?type=registration&id=${reg.id}`}>
-                                <Button size="sm" className="mt-2">填寫匯款資料</Button>
-                              </Link>
+                              <div className="flex flex-col gap-1.5 mt-2 items-end">
+                                <Link href={`/member/payment?type=registration&id=${reg.id}`}>
+                                  <Button size="sm">填寫匯款資料</Button>
+                                </Link>
+                                <Link href={`/member/registrations/${reg.id}/edit`}>
+                                  <Button size="sm" variant="outline" className="gap-1">
+                                    <Pencil className="w-3.5 h-3.5" />
+                                    修改資料
+                                  </Button>
+                                </Link>
+                              </div>
                             )}
                           </div>
                         </div>

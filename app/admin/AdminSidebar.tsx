@@ -5,7 +5,7 @@ import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Users, UserCircle, Trophy, ClipboardList, CreditCard,
-  Megaphone, Settings, LogOut, ChevronRight,
+  Megaphone, Settings, LogOut, ChevronRight, Mail,
 } from "lucide-react";
 
 const navItems = [
@@ -16,6 +16,7 @@ const navItems = [
   { href: "/admin/registrations", label: "報名管理", icon: ClipboardList },
   { href: "/admin/payments", label: "付款確認", icon: CreditCard },
   { href: "/admin/announcements", label: "公告管理", icon: Megaphone },
+  { href: "/admin/emails", label: "群發 Email", icon: Mail },
 ];
 
 interface Props {
