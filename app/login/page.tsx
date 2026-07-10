@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import LoginButtons from "./LoginButtons";
+import OpenInBrowserBanner from "./OpenInBrowserBanner";
 
 export const metadata = { title: "登入 | 中華台北羽球3對3發展協會" };
 
@@ -24,6 +25,8 @@ export default async function LoginPage({
           <h1 className="text-2xl font-bold text-gray-900">會員登入</h1>
           <p className="text-sm text-gray-500 mt-1">中華台北羽球3對3發展協會</p>
         </div>
+
+        <OpenInBrowserBanner />
 
         {params.error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">

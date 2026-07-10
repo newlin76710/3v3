@@ -3,6 +3,8 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { canAutoEscape, detectInAppBrowser, escapeInAppBrowser } from "@/lib/webview";
 
 function GoogleIcon() {
   return (
@@ -39,6 +41,20 @@ export default function LoginButtons({ callbackUrl }: Props) {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSignIn = async (provider: string) => {
+    // Google（及部分平台的 Facebook）會擋掉內建瀏覽器的 OAuth 請求（disallowed_useragent），
+    // 這裡先攔截，改引導使用者跳到系統瀏覽器，避免直接跳出 Google 的錯誤頁。
+    if (provider === "google") {
+      const type = detectInAppBrowser(navigator.userAgent);
+      if (type) {
+        if (canAutoEscape(type)) {
+          escapeInAppBrowser(type);
+        } else {
+          toast.error("請點選右上角「⋯」選單，改用系統瀏覽器開啟本頁後再登入");
+        }
+        return;
+      }
+    }
+
     setLoading(provider);
     try {
       await signIn(provider, { callbackUrl });
