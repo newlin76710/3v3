@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { canAutoEscape, detectInAppBrowser, escapeInAppBrowser } from "@/lib/webview";
+import { buildEscapeUrl, detectInAppBrowser, getMobileOS, hasEscapeMarker } from "@/lib/webview";
 
 function GoogleIcon() {
   return (
@@ -43,11 +43,13 @@ export default function LoginButtons({ callbackUrl }: Props) {
   const handleSignIn = async (provider: string) => {
     // Google（及部分平台的 Facebook）會擋掉內建瀏覽器的 OAuth 請求（disallowed_useragent），
     // 這裡先攔截，改引導使用者跳到系統瀏覽器，避免直接跳出 Google 的錯誤頁。
-    if (provider === "google") {
-      const type = detectInAppBrowser(navigator.userAgent);
+    if (provider === "google" && !hasEscapeMarker(window.location.href)) {
+      const ua = navigator.userAgent;
+      const type = detectInAppBrowser(ua);
       if (type) {
-        if (canAutoEscape(type)) {
-          escapeInAppBrowser(type);
+        const url = buildEscapeUrl(type, getMobileOS(ua), window.location.href);
+        if (url) {
+          window.location.href = url;
         } else {
           toast.error("請點選右上角「⋯」選單，改用系統瀏覽器開啟本頁後再登入");
         }

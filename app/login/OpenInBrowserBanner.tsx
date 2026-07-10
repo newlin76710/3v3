@@ -1,61 +1,64 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ExternalLink, X } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import {
-  canAutoEscape,
+  buildEscapeUrl,
   detectInAppBrowser,
-  escapeInAppBrowser,
-  type InAppBrowser,
+  getMobileOS,
+  hasEscapeMarker,
 } from "@/lib/webview";
 
-const LABELS: Record<Exclude<InAppBrowser, null>, string> = {
-  line: "LINE",
-  wechat: "微信 WeChat",
-  facebook: "Facebook",
-  instagram: "Instagram",
-  "android-webview": "App 內建瀏覽器",
-  "ios-webview": "App 內建瀏覽器",
-};
+type Status = "redirecting" | "guide" | null;
 
 export default function OpenInBrowserBanner() {
-  const [type, setType] = useState<InAppBrowser>(null);
-  const [dismissed, setDismissed] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
+  const [status, setStatus] = useState<Status>(null);
+  const [escapeUrl, setEscapeUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    setType(detectInAppBrowser(navigator.userAgent));
+    if (hasEscapeMarker(window.location.href)) return; // 已經跳出過一次，避免無限跳轉
+
+    const ua = navigator.userAgent;
+    const type = detectInAppBrowser(ua);
+    if (!type) return;
+
+    const os = getMobileOS(ua);
+    const url = buildEscapeUrl(type, os, window.location.href);
+
+    if (!url) {
+      setStatus("guide");
+      return;
+    }
+
+    setEscapeUrl(url);
+    setStatus("redirecting");
+    window.location.href = url;
   }, []);
 
-  if (!type || dismissed) return null;
-
-  const handleClick = () => {
-    if (canAutoEscape(type)) {
-      escapeInAppBrowser(type);
-    } else {
-      setShowGuide(true);
-    }
-  };
+  if (!status) return null;
 
   return (
     <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
       <div className="flex items-start gap-2">
         <ExternalLink className="w-4 h-4 mt-0.5 flex-shrink-0" />
-        <div className="flex-1">
-          偵測到您正在 {LABELS[type]} 內建瀏覽器中,Google 登入可能會失敗。
-          <button onClick={handleClick} className="ml-1 font-semibold underline">
-            點此在瀏覽器開啟
-          </button>
-        </div>
-        <button onClick={() => setDismissed(true)} aria-label="關閉">
-          <X className="w-4 h-4" />
-        </button>
+        {status === "redirecting" ? (
+          <div className="flex-1">
+            偵測到您正在 App 內建瀏覽器中，正在為您開啟系統預設瀏覽器…
+            {escapeUrl && (
+              <button
+                onClick={() => (window.location.href = escapeUrl)}
+                className="ml-1 font-semibold underline"
+              >
+                沒有反應？點此重試
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1">
+            偵測到您正在 App 內建瀏覽器中，Google 登入可能會失敗。請點選右上角「⋯」選單，選擇「在瀏覽器中開啟」，或複製此頁網址貼到 Safari / Chrome 開啟後再登入。
+          </div>
+        )}
       </div>
-      {showGuide && (
-        <div className="mt-2 pl-6 text-amber-700">
-          請點選右上角「⋯」選單，選擇「在瀏覽器中開啟」，或複製此頁網址貼到 Safari / Chrome 開啟後再登入。
-        </div>
-      )}
     </div>
   );
 }
