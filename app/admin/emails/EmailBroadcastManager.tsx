@@ -11,9 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  previewBroadcastRecipients, sendBroadcastEmail, SCOPE_LABELS, SEGMENT_LABELS,
-} from "@/app/actions/emailBroadcast";
+import { previewBroadcastRecipients, sendBroadcastEmail } from "@/app/actions/emailBroadcast";
+import { SCOPE_LABELS, SEGMENT_LABELS } from "@/lib/email-broadcast-labels";
 import { formatDate } from "@/lib/utils";
 import { Send, Loader2, Users } from "lucide-react";
 import type { EmailAudienceScope, EmailAudienceSegment } from "@prisma/client";
