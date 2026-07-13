@@ -83,5 +83,5 @@ export const BANK_INFO = {
 
 export const MEMBERSHIP_FEE = 500;
 export const MEMBERSHIP_DURATION_YEARS = 1;
-// 促銷活動：會籍一律到 2027 年底（配合第一屆中華盃 2026/12/20 賽事）
-export const MEMBERSHIP_PROMO_EXPIRY = new Date("2027-12-31T15:59:59.999Z"); // UTC+8 2027-12-31 23:59:59
+// 促銷活動：會籍一律到 2027/12/19（配合第一屆中華盃 2026/12/20 賽事）
+export const MEMBERSHIP_PROMO_EXPIRY = new Date("2027-12-19T15:59:59.999Z"); // UTC+8 2027-12-19 23:59:59

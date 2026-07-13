@@ -39,7 +39,7 @@ export default async function JoinPage() {
             年費 NT$ 500。完成填寫後請匯款，並填寫匯款末5碼等待審核。
           </p>
           <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
-            🎉 <strong>限時優惠</strong>：現在加入，會籍有效期限一律延長至 <strong>2027 年 12 月 31 日</strong>！
+            🎉 <strong>限時優惠</strong>：現在加入，會籍有效期限一律延長至 <strong>2027 年 12 月 19 日</strong>！
             配合第一屆中華盃全國羽球3對3錦標賽（2026/12/20）舉辦，協會特別贈送延長會期，歡迎把握機會。
           </div>
 
