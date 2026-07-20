@@ -153,7 +153,8 @@ model Event {
   poster            String?
   description       String?
   isOpen            Boolean  @default(false)
-  maxTeamsPerGroup  Int      @default(16)
+  maxTeamsPerGroup  Int      @default(12)
+  memberUpgradeDeadline DateTime?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -168,7 +169,7 @@ model EventGroup {
   minTotalAge      Int
   minIndividualAge Int
   allowedGenders   GenderType[]
-  maxTeams         Int          @default(16)
+  maxTeams         Int          @default(12)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 

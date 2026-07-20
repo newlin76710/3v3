@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { addYears } from "date-fns";
-import { generateMemberNumber, MEMBERSHIP_PROMO_EXPIRY, BANK_INFO } from "@/lib/utils";
+import { generateMemberNumber, MEMBERSHIP_PROMO_EXPIRY, MEMBERSHIP_FEE, BANK_INFO } from "@/lib/utils";
 
 export async function updateUserInfo(data: {
   name?: string;
@@ -155,6 +155,10 @@ export async function registerMember(data: MemberFormData) {
   const memberNumber = generateMemberNumber();
   const expiresAt = MEMBERSHIP_PROMO_EXPIRY;
 
+  // 會員升級優惠：曾以非會員身分繳交報名費（450元）者，可於賽事設定的期限內補差額（250元）成為會員
+  const upgradeSource = await findMembershipUpgradeSource(nationalId);
+  const amount = upgradeSource ? 700 - upgradeSource.fee : MEMBERSHIP_FEE;
+
   const member = await prisma.member.create({
     data: {
       userId: session.user.id,
@@ -176,15 +180,59 @@ export async function registerMember(data: MemberFormData) {
     data: {
       memberId: member.id,
       type: "MEMBERSHIP_FEE",
-      amount: 500,
+      amount,
       status: "PENDING",
       bankCode: BANK_INFO.bankCode,
       bankAccount: BANK_INFO.accountNumber,
+      notes: upgradeSource ? "會員升級優惠（已繳報名費折抵）" : undefined,
     },
   });
 
   revalidatePath("/member");
-  return { success: true, memberNumber, coveredByRegistrationId: null };
+  return { success: true, memberNumber, coveredByRegistrationId: null, amount };
+}
+
+// 查詢是否符合「補差額成為會員」資格：曾以非會員身分繳交報名費（450元、賽事第1項），
+// 且該賽事仍在會員升級期限內
+async function findMembershipUpgradeSource(nationalId: string) {
+  // 若此身分證已有 Member 記錄（含尚未認領的孤立記錄），走一般流程即可，不重複提供優惠
+  const existingMember = await prisma.member.findUnique({ where: { nationalId } });
+  if (existingMember) return null;
+
+  return prisma.registrationPlayer.findFirst({
+    where: {
+      nationalId,
+      memberStatus: "NON_MEMBER",
+      itemCount: 1,
+      registration: {
+        paymentStatus: "PAID",
+        event: { memberUpgradeDeadline: { gt: new Date() } },
+      },
+    },
+    include: { registration: { include: { event: { select: { name: true, memberUpgradeDeadline: true } } } } },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+// 供前台查詢目前登入者是否符合會員升級優惠（顯示用）
+export async function getMembershipUpgradeOffer() {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+
+  const existingUser = await prisma.member.findUnique({ where: { userId: session.user.id } });
+  if (existingUser) return null;
+
+  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { nationalId: true } });
+  if (!user?.nationalId) return null;
+
+  const source = await findMembershipUpgradeSource(user.nationalId);
+  if (!source) return null;
+
+  return {
+    amount: 700 - source.fee,
+    eventName: source.registration.event.name,
+    deadline: source.registration.event.memberUpgradeDeadline as Date,
+  };
 }
 
 const paymentSchema = z.object({

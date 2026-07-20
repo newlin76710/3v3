@@ -82,6 +82,7 @@ interface Props {
   };
   member: Member | null;
   registrations: Registration[];
+  upgradeOffer: { amount: number; eventName: string; deadline: Date } | null;
 }
 
 const statusMap = {
@@ -104,7 +105,7 @@ function toDateStr(d: Date | string | null | undefined): string {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 }
 
-export default function MemberDashboard({ user, member, registrations }: Props) {
+export default function MemberDashboard({ user, member, registrations, upgradeOffer }: Props) {
   const isExpired = member?.expiresAt ? new Date(member.expiresAt) < new Date() : true;
   const isActiveMember = member?.isActive && !isExpired;
   const isAdmin = user.role === "ADMIN" || user.role === "STAFF";
@@ -258,7 +259,7 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
                 <div>
                   <p className="font-medium text-yellow-800">請完成入會費付款</p>
                   <p className="text-sm text-yellow-700 mt-1">
-                    請將 NT$ 500 匯款至協會帳號，完成後請至
+                    請將 {formatCurrency(member.payments.find((p) => p.type === "MEMBERSHIP_FEE")?.amount ?? 500)} 匯款至協會帳號，完成後請至
                     <Link href="/member/payment" className="underline font-medium">填寫匯款末5碼</Link>
                     等待審核。
                   </p>
@@ -325,10 +326,17 @@ export default function MemberDashboard({ user, member, registrations }: Props) 
               <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-gray-700 mb-2">尚未連結協會會員資料</h2>
               <p className="text-gray-500 mb-6">繳交年費 NT$ 500 成為協會會員，享有報名優惠及更多會員專屬服務。</p>
+              {upgradeOffer && (
+                <div className="mb-6 max-w-md mx-auto p-4 bg-amber-50 border border-amber-200 rounded-lg text-left text-sm text-amber-800">
+                  💰 <strong>會員升級優惠</strong>：您已繳交「{upgradeOffer.eventName}」報名費，
+                  只需再補 <strong>{formatCurrency(upgradeOffer.amount)}</strong> 即可成為正式會員，並享第2項報名免費！
+                  請於 <strong>{formatDate(upgradeOffer.deadline)}</strong> 前完成申請與匯款。
+                </div>
+              )}
               <Link href="/member/join">
                 <Button size="lg" className="gap-2">
                   <Plus className="w-4 h-4" />
-                  申請入會 / 連結現有會籍
+                  {upgradeOffer ? "立即優惠升級為會員" : "申請入會 / 連結現有會籍"}
                 </Button>
               </Link>
               <p className="text-xs text-gray-400 mt-4">

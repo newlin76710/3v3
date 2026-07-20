@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { adminCreateRegistration, adminUpdateRegistration } from "@/app/actions/admin";
-import { calculatePlayerFee, formatCurrency } from "@/lib/utils";
+import { calculatePlayerFee, formatCurrency, formatDate } from "@/lib/utils";
 import { differenceInYears } from "date-fns";
 import DateSelectPicker from "@/components/ui/date-select";
 import { Loader2, Users, Info } from "lucide-react";
@@ -19,6 +19,7 @@ type EventWithGroups = {
   id: string;
   name: string;
   date: Date | string;
+  memberUpgradeDeadline?: Date | string | null;
   groups: Array<{
     id: string;
     name: string;
@@ -366,6 +367,12 @@ export default function AdminRegistrationForm(props: Props | EditProps) {
           </div>
         </CardContent>
       </Card>
+
+      {props.mode === "edit" && selectedEvent?.memberUpgradeDeadline && (
+        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+          此賽事會員升級截止日：{formatDate(selectedEvent.memberUpgradeDeadline)}。超過此日期後，系統會拒絕將選手的會員資格由「非會員」改為「新加入會員」（補款升級）。
+        </div>
+      )}
 
       {/* 選手資料 */}
       {players.map((player, index) => {

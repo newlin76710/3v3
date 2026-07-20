@@ -24,7 +24,7 @@ export default function NewEventPage() {
     poster: "",
     description: "",
     isOpen: false,
-    maxTeamsPerGroup: 16,
+    maxTeamsPerGroup: 12,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

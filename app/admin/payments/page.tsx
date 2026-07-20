@@ -12,7 +12,10 @@ export default async function AdminPaymentsPage() {
   const [pendingMembers, pendingRegistrations] = await Promise.all([
     prisma.member.findMany({
       where: { paymentStatus: "CONFIRMING" },
-      include: { user: { select: { email: true, name: true } } },
+      include: {
+        user: { select: { email: true, name: true } },
+        payments: { where: { type: "MEMBERSHIP_FEE", status: "CONFIRMING" }, take: 1 },
+      },
       orderBy: { transferDate: "asc" },
     }),
     prisma.registration.findMany({

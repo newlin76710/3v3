@@ -18,7 +18,7 @@ export default async function PaymentPage({
   const params = await searchParams;
   const memberData = await getMemberData();
 
-  let amount = 500;
+  let amount = memberData?.payments?.find((p) => p.type === "MEMBERSHIP_FEE" && p.status !== "CANCELLED")?.amount ?? 500;
   let registrationLabel: string | null = null;
 
   if (params.type === "registration" && params.id) {

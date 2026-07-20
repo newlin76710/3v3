@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getMemberData } from "@/app/actions/member";
+import { getMemberData, getMembershipUpgradeOffer } from "@/app/actions/member";
 import { prisma } from "@/lib/prisma";
-import { BANK_INFO } from "@/lib/utils";
+import { BANK_INFO, formatCurrency, formatDate } from "@/lib/utils";
 import JoinMemberForm from "./JoinMemberForm";
 
 export const metadata = { title: "申請入會 | 中華台北羽球3對3發展協會" };
@@ -11,12 +11,13 @@ export default async function JoinPage() {
   const session = await auth();
   if (!session) redirect("/login?callbackUrl=/member/join");
 
-  const [existing, userProfile] = await Promise.all([
+  const [existing, userProfile, upgradeOffer] = await Promise.all([
     getMemberData(),
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: { realName: true, nationalId: true, birthday: true, gender: true, phone: true, address: true },
     }),
+    getMembershipUpgradeOffer(),
   ]);
   if (existing) redirect("/member");
 
@@ -36,12 +37,20 @@ export default async function JoinPage() {
         <div className="bg-white rounded-2xl shadow-sm border p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">申請協會會員</h1>
           <p className="text-gray-500 mb-2">
-            年費 NT$ 500。完成填寫後請匯款，並填寫匯款末5碼等待審核。
+            年費 {formatCurrency(upgradeOffer?.amount ?? 500)}。完成填寫後請匯款，並填寫匯款末5碼等待審核。
           </p>
           <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
             🎉 <strong>限時優惠</strong>：現在加入，會籍有效期限一律延長至 <strong>2027 年 12 月 19 日</strong>！
             配合第一屆中華盃全國羽球3對3錦標賽（2026/12/20）舉辦，協會特別贈送延長會期，歡迎把握機會。
           </div>
+
+          {upgradeOffer && (
+            <div className="mb-6 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+              💰 <strong>會員升級優惠</strong>：您已繳交「{upgradeOffer.eventName}」報名費，符合升級資格！
+              只需再補 <strong>{formatCurrency(upgradeOffer.amount)}</strong>（原價 NT$ 500）即可成為正式會員，
+              並可享第2項報名免費，請於 <strong>{formatDate(upgradeOffer.deadline)}</strong> 前完成匯款。
+            </div>
+          )}
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <h3 className="font-semibold text-blue-800 mb-2">匯款資訊</h3>
@@ -49,7 +58,7 @@ export default async function JoinPage() {
               <p>銀行：{BANK_INFO.bankName}（{BANK_INFO.bankCode}）</p>
               <p>帳號：{BANK_INFO.accountNumber}</p>
               <p>戶名：{BANK_INFO.accountName}</p>
-              <p className="font-semibold">金額：NT$ 500</p>
+              <p className="font-semibold">金額：{formatCurrency(upgradeOffer?.amount ?? 500)}</p>
             </div>
           </div>
 

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { updateEvent, createEventGroup, deleteEventGroup } from "@/app/actions/event";
+import { updateEvent, createEventGroup, deleteEventGroup, updateEventGroup } from "@/app/actions/event";
 import { formatDate } from "@/lib/utils";
 import DateSelectPicker from "@/components/ui/date-select";
 import { Plus, Loader2, Users, Trash2, Pencil, X } from "lucide-react";
@@ -34,6 +34,7 @@ type Event = {
   registrationEnd: Date;
   poster: string | null;
   description: string | null;
+  memberUpgradeDeadline: Date | null;
   groups: Group[];
 };
 
@@ -68,6 +69,7 @@ export default function EventAdminManager({ event }: Props) {
     registrationEnd: toDateInput(event.registrationEnd),
     poster: event.poster ?? "",
     description: event.description ?? "",
+    memberUpgradeDeadline: event.memberUpgradeDeadline ? toDateInput(event.memberUpgradeDeadline) : "",
   });
 
   const [showGroupForm, setShowGroupForm] = useState(false);
@@ -78,8 +80,57 @@ export default function EventAdminManager({ event }: Props) {
     minTotalAge: 150,
     minIndividualAge: 45,
     allowedGenders: [] as string[],
-    maxTeams: 16,
+    maxTeams: 12,
   });
+
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [savingGroup, setSavingGroup] = useState(false);
+  const [groupEditForm, setGroupEditForm] = useState({
+    name: "",
+    minTotalAge: 0,
+    minIndividualAge: 0,
+    allowedGenders: [] as string[],
+    maxTeams: 12,
+  });
+
+  const startEditGroup = (group: Group) => {
+    setEditingGroupId(group.id);
+    setGroupEditForm({
+      name: group.name,
+      minTotalAge: group.minTotalAge,
+      minIndividualAge: group.minIndividualAge,
+      allowedGenders: group.allowedGenders,
+      maxTeams: group.maxTeams,
+    });
+  };
+
+  const toggleEditGender = (gender: string) => {
+    setGroupEditForm((prev) => ({
+      ...prev,
+      allowedGenders: prev.allowedGenders.includes(gender)
+        ? prev.allowedGenders.filter((g) => g !== gender)
+        : [...prev.allowedGenders, gender],
+    }));
+  };
+
+  const handleSaveGroupEdit = async (groupId: string) => {
+    if (!groupEditForm.name || groupEditForm.allowedGenders.length === 0) {
+      toast.error("請填寫組別名稱並選擇性別組");
+      return;
+    }
+    setSavingGroup(true);
+    const result = await updateEventGroup(groupId, {
+      ...groupEditForm,
+      allowedGenders: groupEditForm.allowedGenders as ("MALE_TRIPLE" | "FEMALE_TRIPLE" | "MIXED")[],
+    });
+    if (result.error) toast.error(result.error);
+    else {
+      toast.success("組別已更新");
+      setEditingGroupId(null);
+      router.refresh();
+    }
+    setSavingGroup(false);
+  };
 
   const toggleEventOpen = async () => {
     setToggling(true);
@@ -230,6 +281,19 @@ export default function EventAdminManager({ event }: Props) {
                 </div>
               </div>
               <div>
+                <Label>會員升級截止日（選填）</Label>
+                <DateSelectPicker
+                  value={editForm.memberUpgradeDeadline}
+                  onChange={(v) => setEditForm((f) => ({ ...f, memberUpgradeDeadline: v }))}
+                  minYear={new Date().getFullYear() - 10}
+                  maxYear={new Date().getFullYear() + 10}
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  在此日期前，可將已繳費的非會員選手於「編輯報名」中改為新加入會員（補款升級，享第2項免費）。留空表示不限制。
+                </p>
+              </div>
+              <div>
                 <Label>海報圖片 URL</Label>
                 <Input
                   value={editForm.poster}
@@ -265,6 +329,7 @@ export default function EventAdminManager({ event }: Props) {
                       registrationEnd: toDateInput(event.registrationEnd),
                       poster: event.poster ?? "",
                       description: event.description ?? "",
+                      memberUpgradeDeadline: event.memberUpgradeDeadline ? toDateInput(event.memberUpgradeDeadline) : "",
                     });
                   }}
                 >
@@ -284,6 +349,9 @@ export default function EventAdminManager({ event }: Props) {
               <div><span className="text-gray-500">地點：</span>{event.location}</div>
               <div><span className="text-gray-500">報名期間：</span>
                 {formatDate(event.registrationStart)} ~ {formatDate(event.registrationEnd)}
+              </div>
+              <div><span className="text-gray-500">會員升級截止日：</span>
+                {event.memberUpgradeDeadline ? formatDate(event.memberUpgradeDeadline) : "不限制"}
               </div>
               {event.poster && (
                 <div className="sm:col-span-2">
@@ -392,52 +460,130 @@ export default function EventAdminManager({ event }: Props) {
               0
             );
             const groupCapacity = group.maxTeams * group.allowedGenders.length;
+            const isEditingGroup = editingGroupId === group.id;
             return (
               <Card key={group.id}>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold">{group.name}</h3>
-                      </div>
-                      <div className="text-sm text-gray-500 space-x-3">
-                        <span>總年齡 {group.minTotalAge}+</span>
-                        <span>個人 {group.minIndividualAge}+</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {group.allowedGenders.map((g) => {
-                          const count = group.genderCounts[g] ?? 0;
-                          const full = count >= group.maxTeams;
-                          return (
-                            <Badge key={g} variant={full ? "destructive" : "outline"} className="text-xs">
-                              {genderLabel[g]} {count}/{group.maxTeams}{full ? " 額滿" : ""}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0 flex items-center gap-3">
-                      <div>
-                        <div className="flex items-center gap-1 text-sm font-medium">
-                          <Users className="w-4 h-4 text-gray-400" />
-                          {groupTotal} / {groupCapacity}
+                  {isEditingGroup ? (
+                    <div className="space-y-4">
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label>組別名稱 *</Label>
+                          <Input
+                            value={groupEditForm.name}
+                            onChange={(e) => setGroupEditForm((p) => ({ ...p, name: e.target.value }))}
+                            className="mt-1"
+                          />
                         </div>
-                        {groupTotal >= groupCapacity && (
-                          <Badge variant="destructive" className="text-xs mt-1">全額滿</Badge>
-                        )}
+                        <div>
+                          <Label>最多隊數（每個性別組各自獨立）</Label>
+                          <Input
+                            type="number"
+                            value={groupEditForm.maxTeams}
+                            onChange={(e) => setGroupEditForm((p) => ({ ...p, maxTeams: Number(e.target.value) }))}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>最低總年齡</Label>
+                          <Input
+                            type="number"
+                            value={groupEditForm.minTotalAge}
+                            onChange={(e) => setGroupEditForm((p) => ({ ...p, minTotalAge: Number(e.target.value) }))}
+                            className="mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label>最低個人年齡</Label>
+                          <Input
+                            type="number"
+                            value={groupEditForm.minIndividualAge}
+                            onChange={(e) => setGroupEditForm((p) => ({ ...p, minIndividualAge: Number(e.target.value) }))}
+                            className="mt-1"
+                          />
+                        </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteGroup(group.id, group.name)}
-                        disabled={deletingGroupId === group.id}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-40"
-                        title="刪除組別"
-                      >
-                        {deletingGroupId === group.id
-                          ? <Loader2 className="w-4 h-4 animate-spin" />
-                          : <Trash2 className="w-4 h-4" />}
-                      </button>
+                      <div>
+                        <Label>可選性別組 *</Label>
+                        <div className="flex gap-2 mt-2">
+                          {["MALE_TRIPLE", "FEMALE_TRIPLE", "MIXED"].map((g) => (
+                            <button
+                              key={g}
+                              type="button"
+                              onClick={() => toggleEditGender(g)}
+                              className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                                groupEditForm.allowedGenders.includes(g)
+                                  ? "bg-blue-600 text-white border-blue-600"
+                                  : "border-gray-300 text-gray-700"
+                              }`}
+                            >
+                              {genderLabel[g]}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button onClick={() => handleSaveGroupEdit(group.id)} disabled={savingGroup} size="sm">
+                          {savingGroup ? <Loader2 className="animate-spin mr-1 w-3 h-3" /> : null}
+                          儲存
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setEditingGroupId(null)}>
+                          取消
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold">{group.name}</h3>
+                        </div>
+                        <div className="text-sm text-gray-500 space-x-3">
+                          <span>總年齡 {group.minTotalAge}+</span>
+                          <span>個人 {group.minIndividualAge}+</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {group.allowedGenders.map((g) => {
+                            const count = group.genderCounts[g] ?? 0;
+                            const full = count >= group.maxTeams;
+                            return (
+                              <Badge key={g} variant={full ? "destructive" : "outline"} className="text-xs">
+                                {genderLabel[g]} {count}/{group.maxTeams}{full ? " 額滿" : ""}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0 flex items-center gap-3">
+                        <div>
+                          <div className="flex items-center gap-1 text-sm font-medium">
+                            <Users className="w-4 h-4 text-gray-400" />
+                            {groupTotal} / {groupCapacity}
+                          </div>
+                          {groupTotal >= groupCapacity && (
+                            <Badge variant="destructive" className="text-xs mt-1">全額滿</Badge>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => startEditGroup(group)}
+                          className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                          title="編輯組別"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteGroup(group.id, group.name)}
+                          disabled={deletingGroupId === group.id}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-40"
+                          title="刪除組別"
+                        >
+                          {deletingGroupId === group.id
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : <Trash2 className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );

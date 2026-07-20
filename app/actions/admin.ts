@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { addYears, differenceInYears } from "date-fns";
-import { MEMBERSHIP_PROMO_EXPIRY, calculatePlayerFee, generateMemberNumber, BANK_INFO, GENDER_TYPE_LABELS } from "@/lib/utils";
+import { MEMBERSHIP_PROMO_EXPIRY, calculatePlayerFee, generateMemberNumber, BANK_INFO, GENDER_TYPE_LABELS, formatDate } from "@/lib/utils";
 
 async function requireAdmin() {
   const session = await auth();
@@ -635,6 +635,18 @@ export async function adminUpdateRegistration(
       fee: calculatePlayerFee(p.memberStatus, isSecondItem(p.nationalId)),
     }));
     const totalAmount = playersWithFee.reduce((sum, p) => sum + p.fee, 0);
+
+    // 會員升級期限檢查：非會員補款升級為新加入會員，需在賽事設定的期限內
+    const upgradeDeadline = group.event.memberUpgradeDeadline;
+    if (upgradeDeadline && new Date() > upgradeDeadline) {
+      const oldByIdForDeadline = new Map(registration.players.map((p) => [p.id, p]));
+      for (const p of players) {
+        const old = p.id ? oldByIdForDeadline.get(p.id) : undefined;
+        if (old && old.memberStatus === "NON_MEMBER" && p.memberStatus === "NEW_MEMBER") {
+          return { error: `會員升級已截止（${formatDate(upgradeDeadline)}），無法將選手由非會員改為新加入會員` };
+        }
+      }
+    }
 
     const now = new Date();
     const wasAlreadyPaid = registration.paymentStatus === "PAID";

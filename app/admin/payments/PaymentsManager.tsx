@@ -20,6 +20,7 @@ type PendingMember = {
   transferDate: Date | null;
   createdAt: Date;
   user: { email: string | null; name: string | null } | null;
+  payments: Array<{ amount: number; notes: string | null }>;
 };
 
 type PendingRegistration = {
@@ -111,7 +112,14 @@ export default function PaymentsManager({ pendingMembers, pendingRegistrations }
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-semibold text-gray-900">{member.realName}</h3>
                         <Badge variant="warning">待確認</Badge>
-                        <span className="text-sm font-bold text-blue-600">NT$ 500</span>
+                        <span className="text-sm font-bold text-blue-600">
+                          {formatCurrency(member.payments[0]?.amount ?? 500)}
+                        </span>
+                        {member.payments[0]?.notes && (
+                          <Badge variant="outline" className="text-xs text-amber-700 border-amber-300">
+                            {member.payments[0].notes}
+                          </Badge>
+                        )}
                       </div>
                       <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
                         <span>會員編號：{member.memberNumber}</span>

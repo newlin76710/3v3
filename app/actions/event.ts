@@ -15,7 +15,8 @@ const eventSchema = z.object({
   poster: z.string().optional(),
   description: z.string().optional(),
   isOpen: z.boolean().default(false),
-  maxTeamsPerGroup: z.number().int().min(1).max(100).default(16),
+  maxTeamsPerGroup: z.number().int().min(1).max(100).default(12),
+  memberUpgradeDeadline: z.string().optional(),
 });
 
 export async function createEvent(data: z.infer<typeof eventSchema>) {
@@ -41,6 +42,11 @@ export async function createEvent(data: z.infer<typeof eventSchema>) {
         registrationEnd: new Date(parsed.data.registrationEnd.includes("T")
           ? parsed.data.registrationEnd
           : parsed.data.registrationEnd + "T15:59:59.999Z"),
+        memberUpgradeDeadline: parsed.data.memberUpgradeDeadline
+          ? new Date(parsed.data.memberUpgradeDeadline.includes("T")
+              ? parsed.data.memberUpgradeDeadline
+              : parsed.data.memberUpgradeDeadline + "T15:59:59.999Z")
+          : null,
       },
     });
     revalidatePath("/events");
@@ -59,7 +65,7 @@ export async function updateEvent(id: string, data: Partial<z.infer<typeof event
     return { error: "無權限" };
   }
 
-  const dateFields: Partial<{ date: Date; registrationStart: Date; registrationEnd: Date }> = {};
+  const dateFields: Partial<{ date: Date; registrationStart: Date; registrationEnd: Date; memberUpgradeDeadline: Date | null }> = {};
   if (data.date) dateFields.date = new Date(data.date + "T00:00:00.000Z");
   if (data.registrationStart) dateFields.registrationStart = new Date(
     data.registrationStart.includes("T") ? data.registrationStart : data.registrationStart + "T00:00:00.000Z"
@@ -67,6 +73,13 @@ export async function updateEvent(id: string, data: Partial<z.infer<typeof event
   if (data.registrationEnd) dateFields.registrationEnd = new Date(
     data.registrationEnd.includes("T") ? data.registrationEnd : data.registrationEnd + "T15:59:59.999Z"
   );
+  if (data.memberUpgradeDeadline !== undefined) {
+    dateFields.memberUpgradeDeadline = data.memberUpgradeDeadline
+      ? new Date(data.memberUpgradeDeadline.includes("T")
+          ? data.memberUpgradeDeadline
+          : data.memberUpgradeDeadline + "T15:59:59.999Z")
+      : null;
+  }
   await prisma.event.update({ where: { id }, data: { ...data, ...dateFields } });
   revalidatePath("/events");
   revalidatePath("/admin/events");
@@ -79,7 +92,7 @@ const groupSchema = z.object({
   minTotalAge: z.number().int().min(0),
   minIndividualAge: z.number().int().min(0),
   allowedGenders: z.array(z.enum(["MALE_TRIPLE", "FEMALE_TRIPLE", "MIXED"])).min(1, "至少選擇一種組別"),
-  maxTeams: z.number().int().min(1).default(16),
+  maxTeams: z.number().int().min(1).default(12),
 });
 
 export async function createEventGroup(data: z.infer<typeof groupSchema>) {
@@ -94,6 +107,49 @@ export async function createEventGroup(data: z.infer<typeof groupSchema>) {
   const group = await prisma.eventGroup.create({ data: parsed.data });
   revalidatePath("/admin/events");
   return { success: true, id: group.id };
+}
+
+const updateGroupSchema = groupSchema.omit({ eventId: true });
+
+export async function updateEventGroup(groupId: string, data: z.infer<typeof updateGroupSchema>) {
+  const session = await auth();
+  if (!session?.user || !["ADMIN", "STAFF"].includes(session.user.role)) {
+    return { error: "無權限" };
+  }
+
+  const parsed = updateGroupSchema.safeParse(data);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const existing = await prisma.eventGroup.findUnique({
+    where: { id: groupId },
+    include: {
+      registrations: {
+        where: { paymentStatus: { not: "CANCELLED" } },
+        select: { genderType: true },
+      },
+    },
+  });
+  if (!existing) return { error: "組別不存在" };
+
+  // 上限不能低於目前任一性別分組已報名的隊數
+  const genderCounts = computeGenderCounts(existing.registrations);
+  for (const g of existing.allowedGenders) {
+    const count = genderCounts[g] ?? 0;
+    if (count > parsed.data.maxTeams) {
+      return { error: `此組別「${g}」已有 ${count} 隊報名，上限不能低於 ${count}` };
+    }
+  }
+  // 移除已有報名的性別組合
+  const removedGenders = existing.allowedGenders.filter((g) => !parsed.data.allowedGenders.includes(g));
+  for (const g of removedGenders) {
+    if ((genderCounts[g] ?? 0) > 0) {
+      return { error: `「${g}」已有隊伍報名，無法從可選性別組移除` };
+    }
+  }
+
+  await prisma.eventGroup.update({ where: { id: groupId }, data: parsed.data });
+  revalidatePath("/admin/events");
+  return { success: true };
 }
 
 export async function deleteEventGroup(groupId: string) {

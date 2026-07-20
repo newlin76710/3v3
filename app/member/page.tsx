@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getMemberData } from "@/app/actions/member";
+import { getMemberData, getMembershipUpgradeOffer } from "@/app/actions/member";
 import { getMyRegistrations } from "@/app/actions/registration";
 import { prisma } from "@/lib/prisma";
 import MemberDashboard from "./MemberDashboard";
@@ -11,7 +11,7 @@ export default async function MemberPage() {
   const session = await auth();
   if (!session) redirect("/login?callbackUrl=/member");
 
-  const [memberData, registrations, fullUser] = await Promise.all([
+  const [memberData, registrations, fullUser, upgradeOffer] = await Promise.all([
     getMemberData(),
     getMyRegistrations(),
     prisma.user.findUnique({
@@ -22,6 +22,7 @@ export default async function MemberPage() {
         gender: true, address: true, nationalIdLockedAt: true,
       },
     }),
+    getMembershipUpgradeOffer(),
   ]);
 
   return (
@@ -29,6 +30,7 @@ export default async function MemberPage() {
       user={{ role: session.user.role, ...fullUser }}
       member={memberData}
       registrations={registrations}
+      upgradeOffer={upgradeOffer}
     />
   );
 }
